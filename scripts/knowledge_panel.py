@@ -1,5 +1,5 @@
 """
-map_server.py —— 知识地图可视化面板
+knowledge_panel.py —— 知识地图可视化面板
 
 启动本地 HTTP 服务器，在浏览器中呈现 DOL 风格界面：
 - 知识地图（Canvas 依赖关系图、拓扑分层布局、节点详情浮动面板）
@@ -9,9 +9,9 @@ map_server.py —— 知识地图可视化面板
 地图导航和教学对话由终端 map.py + Claude Code 完成，本网站作为知识和进度的可视化仪表盘。
 
 用法：
-    python scripts/map_server.py
-    python scripts/map_server.py --port 8765
-    python scripts/map_server.py --no-browser
+    python scripts/knowledge_panel.py
+    python scripts/knowledge_panel.py --port 8765
+    python scripts/knowledge_panel.py --no-browser
 """
 
 import os

@@ -21,23 +21,24 @@ sugeladi/
 │       ├── after_class_update.md   课后更新模板
 │       └── textbook_transform.md   长教材分片与教案模板（~110行）
 │
-├── characters/            ← 角色文件（卡片式）
-│   ├── hoshino_mio/
-│   │   ├── hoshino_mio.md          澪的角色卡（上课加载，~72行）
-│   │   ├── character_backstory.md  澪的背景故事（首次/按需加载）
-│   │   └── supplement_tutoring.md  课后辅导补充（仅辅导模式）
-│   └── asakura_natsune/
-│       └── asakura_natsune.md      夏音的人物文件
+├── characters/            ← 角色文件（YAML 卡片式）
+│   ├── ling/
+│   │   ├── ling.yaml                灵的角色卡（八重神子风）
+│   │   ├── character_backstory.yaml 灵的背景故事（首次/按需）
+│   │   └── supplement_tutoring.yaml 课后辅导补充（辅导模式）
+│   └── xia/
+│       ├── xia.yaml                 夏的角色卡（神里绫华风）
+│       └── xia.md                   索引
 │
 ├── scripts/               ← 脚本层
 │   ├── _shared.py         共享函数（scan_courses, compute_transitive_impact 等）
 │   ├── map.py             终端交互式地图导航
-│   ├── map_server.py      知识地图可视化面板（HTTP 服务器）
+│   ├── knowledge_panel.py      知识地图可视化面板（HTTP 服务器）
 │   ├── build_knowledge_map.py      从 .md 生成 knowledge_map_state.json
 │   ├── recommend_node.py           薄弱节点推荐
 │   ├── update_knowledge_map.py     课后更新知识地图状态
 │   ├── templates/
-│   │   └── index.html     map_server 前端页面
+│   │   └── index.html     knowledge_panel 前端页面
 │   ├── current_scene.json 场景交接信号（map.py 写 → AI 读 → AI 删）
 │   └── map_state.json     地图记忆（上次位置/老师/课程）
 │
@@ -91,20 +92,21 @@ sugeladi/
 
 | 条件 | 加读文件 |
 |------|---------|
-| 同学陪读 | `teacher/classroom.md` + 夏音角色文件 |
-| 课后辅导模式 | `supplement_tutoring.md` |
+| 同学陪读 | `teacher/classroom.md` + 夏角色卡 |
+| 课后辅导模式 | `supplement_tutoring.yaml` |
 | 课后更新 | `after_class_update.md` |
 | 教材改写 | `textbook_transform.md` |
-| 首次见面/用户要求 | `character_backstory.md` |
+| 首次见面/用户要求 | `character_backstory.yaml` |
 | 无对应课程 | `course_inbox_protocol.md` |
 
 ---
 
 ## 角色系统
 
-采用**卡片式**结构：角色卡（核心信念、反差触发、经典话术、禁止事项）+ 背景故事（仅首次加载）。
+采用 **YAML 卡片式**结构：角色卡 + 背景故事 + 场景片段索引（scenes 字段），AI 按场景选取对应 section。
 
-澪的情感表达：不直接"说"，只通过节奏和语气"漏"。交流会上对学生提问的印象 → 三个月后在名单上认出他 → 接了这个学生。见 `character_backstory.md`。
+灵：八重神子式知心大姐姐，笑眯眯追问，情感藏在玩笑里——越喜欢越要逗。
+夏：神里绫华式青梅竹马，含蓄细腻，好感藏在日常小动作里。
 
 ---
 
@@ -113,7 +115,7 @@ sugeladi/
 | 脚本 | 用途 |
 |------|------|
 | `map.py` | 终端交互式地图，Rich UI。数字键导航，选场景后写 scene 文件退出 |
-| `map_server.py` | HTTP 服务器（127.0.0.1），浏览器可视化：知识地图 Canvas + 闪卡复习 + 课程进度 |
+| `knowledge_panel.py` | HTTP 服务器（127.0.0.1），浏览器可视化：知识地图 Canvas + 闪卡复习 + 课程进度 |
 | `build_knowledge_map.py` | 从 knowledge_map.md 生成 knowledge_map_state.json 骨架 |
 | `recommend_node.py` | 找出薄弱节点，按影响面排序推荐 |
 | `update_knowledge_map.py` | 课后扫描 lesson_state + reading_plan，更新节点状态 |

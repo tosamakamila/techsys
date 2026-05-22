@@ -57,7 +57,7 @@ python scripts/map.py --go --mode tutoring  # 课后辅导
 python scripts/map.py --server
 ```
 
-在 map.py 启动前/后自动拉起 `map_server.py` 作为后台进程。map.py 退出时自动关闭 server。
+在 map.py 启动前/后自动拉起 `knowledge_panel.py` 作为后台进程。map.py 退出时自动关闭 server。
 
 ### 两种实现路径
 
@@ -67,7 +67,7 @@ python scripts/map.py --server
 # map.py 新增
 def start_server(port=8765):
     """在守护线程中启动 HTTP 服务器。"""
-    from map_server import MapHandler
+    from knowledge_panel import MapHandler
     server = HTTPServer(("127.0.0.1", port), MapHandler)
     thread = threading.Thread(target=server.serve_forever, daemon=True)
     thread.start()
@@ -75,15 +75,15 @@ def start_server(port=8765):
 ```
 
 - 优点：一个进程，自动同生命周期
-- 缺点：map.py 和 map_server.py 的依赖耦合；线程异常处理
+- 缺点：map.py 和 knowledge_panel.py 的依赖耦合；线程异常处理
 - 改动量：map.py 约 15 行
 
 **路径 B：map.py 启动时 spawn 子进程**
 
 ```python
 def start_server(port=8765):
-    """启动 map_server.py 子进程。"""
-    server_script = SCRIPTS_DIR / "map_server.py"
+    """启动 knowledge_panel.py 子进程。"""
+    server_script = SCRIPTS_DIR / "knowledge_panel.py"
     proc = subprocess.Popen(
         [sys.executable, str(server_script), "--port", str(port), "--no-browser"],
         stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
@@ -144,3 +144,4 @@ python scripts/map.py --go --server    # 一键进课堂 + 面板后台
 | 上次位置是 gate/classroom_door | 报错提示："上次未进入教学场景，请先手动选择" |
 | 教室有多个 scene（上课/辅导）| 默认取第一个 scene 动作，`--mode` 覆盖 |
 | `--server` 端口被占用 | 自动尝试下一个端口（8765→8766→8767）|
+

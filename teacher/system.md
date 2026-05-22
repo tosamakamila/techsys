@@ -17,8 +17,11 @@
 | `teacher/classroom.md` | 同学陪读模式 | 用户选择同学陪读时 |
 | `teacher/templates/` | 课后更新、教材改写等模板 | 课后更新或教材改写时 |
 | `teacher/templates/review_lesson.md` | 迷你课复习协议（三段式循环+简化下课） | `review_with_teacher` 场景 |
-| `characters/<角色>/` | 角色卡 + 背景故事 | 每次上课（卡）/ 首次见面（故事） |
+| `teacher/templates/library_chat.md` | 图书馆聊天场景指南（夏） | `chat` 或 `study_together` 场景 |
+| `characters/<角色>/<角色>.yaml` | 角色卡（灵/夏均 YAML化，scenes 字段定义场景片段） | 按 scene 选取对应 section |
+| `characters/<角色>/character_backstory.yaml` | 角色背景故事 | 首次见面/用户询问 |
+| `characters/<角色>/supplement_tutoring.yaml` | 课后辅导补充（灵） | `tutoring` 场景 |
 | `scripts/map.py` | 终端交互式地图 | 用户说"上学"或上课触发词时 |
-| `scripts/map_server.py` | 知识地图可视化面板 | 手动启动 |
+| `scripts/knowledge_panel.py` | 知识地图可视化面板 | 手动启动 |
 | `scripts/_shared.py` | 脚本共享函数 | 各脚本内部引用 |
 | `courses/<课程名>/` | 课程教材、进度、状态 | 选定课程后 |

@@ -5,10 +5,17 @@
   - 支持 `--mode` 覆盖教学场景类型（teaching/tutoring/review_with_teacher 等）
   - 支持 `--course` 换课：`--go --course uv`
   - 6 种边界情况处理：无记录/老师不存在/课程不存在/位置无效/mode 无效/条件不满足
-- `map.py` 新增 `--server` 参数：子进程启动 `map_server.py`（~25 行）
+- `map.py` 新增 `--server` 参数：子进程启动 `knowledge_panel.py`（~25 行）
   - 端口占用时自动尝试下一个（最多 5 次）
   - 可与 `--go` 组合：`--go --server` 一键进课堂+面板在线
 - 去除未使用的 `threading` import
+- `load_state()` 默认仅恢复位置，不恢复老师/课程（每次 map.py 干净启动）
+- 教室菜单分层：未选课时隐藏上课/辅导选项，已选课后显示 + "换课程"
+- `map_server.py` → `knowledge_panel.py` 重命名，更新全部引用（8 个文件）
+- map.py 启动时 + 放学时清理残留 `current_scene.json`
+- `show_course_submenu()` 新增"其他课程"选项：手动输入课程名，AI 从 course_inbox/ 匹配建课
+- `write_scene_file()` 和 `validate_state()` 兼容不在 courses/ 中的自定义课程名
+- 删除测试数据 `courses/动物生理学/`
 
 ### 迷你课（复习模式）实现
 - 新建 `teacher/templates/review_lesson.md`（~150 行）：定义三段式复习循环（定位卡点→针对性重讲→换例验证）
@@ -33,7 +40,7 @@
 ### 脚本层重构
 - 新建 `scripts/_shared.py`：提取 4 个共享函数（scan_courses, scan_characters, compute_transitive_impact, concept_match）
 - `map.py`：删除重复的 scan_courses/scan_characters（-70 行），删除死代码 SYSTEM_ACTIONS
-- `map_server.py`：删除重复的 scan_courses，删除空注释块，parse_qs 改用标准库 urllib.parse，HTML 分离到 `scripts/templates/index.html`（-967 行内嵌）
+- `knowledge_panel.py`：删除重复的 scan_courses，删除空注释块，parse_qs 改用标准库 urllib.parse，HTML 分离到 `scripts/templates/index.html`（-967 行内嵌）
 - `recommend_node.py`：compute_transitive_impact 改为从 _shared 导入（-17 行）
 - `update_knowledge_map.py`：compute_transitive_impact 和 concept_match 改为从 _shared 导入，concept_in_stuck 简化为 1 行
 
@@ -58,7 +65,7 @@
 
 ## 2026-05-21：教学 Tab + 文件桥接（HTML ↔ Claude 通信）
 
-在 map_server.py 中新增「教学」Tab，实现 HTML 与 Claude Code 之间通过 JSON 文件进行教学对话。
+在 knowledge_panel.py 中新增「教学」Tab，实现 HTML 与 Claude Code 之间通过 JSON 文件进行教学对话。
 
 ### 新增
 
@@ -86,7 +93,7 @@ Claude 回复 → conversation.json → HTML 轮询显示
 
 ### 修改文件
 
-- `scripts/map_server.py`：新增教学 Tab（CSS + HTML + JS）、4 个 API 端点、对话管理函数
+- `scripts/knowledge_panel.py`：新增教学 Tab（CSS + HTML + JS）、4 个 API 端点、对话管理函数
 - `CLAUDE.md`：「场景文件触发」节新增「文件桥接模式」小节，定义 pending_input.json 优先检查、文件输出规则、下课/放学处理
 
 ---
@@ -120,19 +127,19 @@ Claude 回复 → conversation.json → HTML 轮询显示
 
 ### 修改文件
 
-- `scripts/map_server.py`：瘦身约 200 行 + 新增 Canvas 知识地图
+- `scripts/knowledge_panel.py`：瘦身约 200 行 + 新增 Canvas 知识地图
 - `CLAUDE.md`：删除文件桥接模式小节
 - `log.md`：本条目
 
 ---
 
-## 2026-05-21：DOL 风格 HTML 完整客户端（map_server.py）
+## 2026-05-21：DOL 风格 HTML 完整客户端（knowledge_panel.py）
 
 基于用户选择（方案 B：双窗口模式），将 map.py 扩展为完整的 DOL 风格 HTML 客户端。
 
 ### 新增/重写
 
-- `scripts/map_server.py`：完整重写，~800 行。Python HTTP 服务器 + 嵌入式 HTML/CSS/JS。
+- `scripts/knowledge_panel.py`：完整重写，~800 行。Python HTTP 服务器 + 嵌入式 HTML/CSS/JS。
 
 ### 四大视图
 
@@ -155,11 +162,11 @@ Claude 回复 → conversation.json → HTML 轮询显示
 ### 启动方式
 
 ```bash
-python scripts/map_server.py          # 自动打开浏览器
-python scripts/map_server.py --port 8765 --no-browser
+python scripts/knowledge_panel.py          # 自动打开浏览器
+python scripts/knowledge_panel.py --port 8765 --no-browser
 ```
 
-修改文件：`scripts/map_server.py`（重写）
+修改文件：`scripts/knowledge_panel.py`（重写）
 
 ## 2026-05-21：Python 地图导航脚本（map.py）
 
@@ -565,8 +572,46 @@ CLAUDE.md「去找夏音 → 一起学习」子面板中，「考考我」和「
 
 ### 修改文件
 
-- `scripts/map_server.py`：~1300+ 行（删除 ~300 行地图/教学代码，新增 Canvas 知识地图 ~200 行）
+- `scripts/knowledge_panel.py`：~1300+ 行（删除 ~300 行地图/教学代码，新增 Canvas 知识地图 ~200 行）
 - `CLAUDE.md`：删除文件桥接模式小节
 - `log.md`：本条目
 
+---
+
+## 2026-05-22：角色系统重构（YAML化 + 风格重写 + 重命名）
+
+### 图书馆菜单调整 + 三条交互线明确化
+- map.py 图书馆：「选课程」→「学习」（子菜单占位：费曼模式、互相出题，暂未开放）
+- 三条交互线分离：
+  - 教室「和夏一起上课」→ `teaching` + classmate（灵在场）
+  - 图书馆「闲聊」→ `chat`（`library_chat.md` + 夏，不加载灵和 classroom.md）
+  - 图书馆「学习」→ `study_together`（chat 基础上 + 课程文件）
+- 新建 `teacher/templates/library_chat.md`：图书馆聊天场景指南
+- 理由：用户要求三种互动方式各走各的路由，不混淆
+
+### 夏角色重写（神里绫华方向）
+- 从通用同学 → 神里绫华式青梅竹马：含蓄细腻，好感藏在日常小动作里
+- 新增：青梅竹马背景、日常习惯与小细节、聊天话题偏好
+- 说话方式分课堂/闲聊两套
+- 理由：用户指定神里绫华为参考方向
+
+### 夏 YAML 化
+- 4 个 md 片段（core/backstory/learning/chat）→ 1 个 `xia.yaml`（~100行）
+- `scenes:` 字段定义三个场景各加载哪些 section
+- 理由：用户觉得 md 太长，要结构化 YAML 人物卡
+
+### 灵全量重写（八重神子方向）
+- 风格：清冷话少精准 → 笑眯眯知心大姐姐
+- 调侃式追问替代冷脸批评："嗯哼～所以你觉得这样就够了？"
+- 情感：神子式——越喜欢越要逗，`teasing_is_affection` 字段定义四类玩笑表达
+- 反差切换：收起笑容 = 这里很重要
+- 文件：`ling.yaml` + `character_backstory.yaml` + `supplement_tutoring.yaml`（均为 YAML）
+- 理由：用户不喜欢清冷话术，要活泼知心大姐姐，参考八重神子
+
+### 角色重命名：灵 + 夏
+- 星野澪 → 灵，朝仓夏音 → 夏
+- 目录：`characters/ling/` + `characters/xia/`
+- 全项目引用更新（CLAUDE.md / system.md / system_detail.md / classroom.md / library_chat.md / map.py / README.md / todo.md / 全部 course 文件）
+- `_shared.py`：`scan_characters()` 适配 yaml 优先读取，`supplement_tutoring` 支持 .yaml/.md
+- 理由：用户要求名字好打（拼音，4键位）
 

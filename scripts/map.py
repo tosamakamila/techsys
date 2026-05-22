@@ -96,7 +96,7 @@ LOCATIONS = {
         "flavor": "公告栏上贴着今天的排课",
         "desc": "今天哪位老师来上课？",
         "actions": [
-            {"key": "1", "label": "星野澪", "type": "select_teacher"},
+            {"key": "1", "label": "灵", "type": "select_teacher"},
         ],
     },
     "classroom_door": {
@@ -106,12 +106,12 @@ LOCATIONS = {
         "actions": [
             {"key": "1", "label": "去教室（上课）", "type": "navigate", "target": "classroom"},
             {"key": "2", "label": "去自习室（复习）", "type": "navigate", "target": "study_room"},
-            {"key": "3", "label": "去找夏音", "type": "navigate", "target": "library"},
+            {"key": "3", "label": "去找夏", "type": "navigate", "target": "library"},
         ],
     },
     "classroom": {
         "name": "教室",
-        "flavor": "澪在讲台前翻着备课本",
+        "flavor": "灵在讲台前翻着备课本",
         "desc": "",
         "actions": [
             {"key": "1", "label": "选课程", "type": "select_course"},
@@ -119,6 +119,8 @@ LOCATIONS = {
              "needs_course": True},
             {"key": "3", "label": "课后辅导", "type": "scene", "scene_id": "tutoring",
              "needs_course": True},
+            {"key": "4", "label": "和夏一起上课", "type": "scene", "scene_id": "teaching",
+             "needs_course": True, "set_classmate": True},
         ],
     },
     "study_room": {
@@ -136,13 +138,11 @@ LOCATIONS = {
     },
     "library": {
         "name": "图书馆",
-        "flavor": "靠窗的位置，夏音正在翻笔记本",
+        "flavor": "靠窗的位置，夏正在翻笔记本",
         "desc": "",
         "actions": [
             {"key": "1", "label": "闲聊", "type": "scene", "scene_id": "chat"},
-            {"key": "2", "label": "一起学习", "type": "scene", "scene_id": "study_together",
-             "needs_course": True},
-            {"key": "3", "label": "选课程", "type": "select_course"},
+            {"key": "2", "label": "学习", "type": "study_submenu"},
         ],
     },
 }
@@ -153,8 +153,8 @@ NO_BACK_LOCATIONS = {"gate"}
 
 # ── 状态持久化 ───────────────────────────────────────────────
 
-def load_state(args) -> AppState:
-    """加载 map_state.json，失败则返回默认状态。"""
+def load_state(args, full: bool = False) -> AppState:
+    """加载 map_state.json。默认仅恢复位置，full=True 时恢复全部（供 --go 使用）。"""
     state = AppState()
     if args.no_state:
         return state
@@ -166,9 +166,10 @@ def load_state(args) -> AppState:
     try:
         data = json.loads(state_path.read_text(encoding="utf-8"))
         state.location = data.get("last_location", "gate")
-        state.teacher = data.get("last_teacher")
-        state.course = data.get("last_course")
-        state.classmate = data.get("last_classmate", False)
+        if full:
+            state.teacher = data.get("last_teacher")
+            state.course = data.get("last_course")
+            state.classmate = data.get("last_classmate", False)
     except (json.JSONDecodeError, KeyError):
         pass
 
@@ -192,8 +193,8 @@ def validate_state(state: AppState, characters: dict, courses: dict):
     """验证持久化状态中的引用是否仍然有效。"""
     if state.teacher and state.teacher not in characters:
         state.teacher = None
-    if state.course and state.course not in courses:
-        state.course = None
+    # 不清理不在 courses/ 中的课程名——可能是用户通过"其他课程"输入的自定义名称
+    # 这些课程将由 AI 从 course_inbox/ 匹配并自动建课
     # 如果不在 gate 且没有老师，回退到 gate
     if state.location != "gate":
         if state.teacher is None and len(characters) > 0:
@@ -211,8 +212,11 @@ def write_scene_file(scene_id: str, state: AppState, characters: dict, courses: 
         teacher_name = characters[state.teacher]["name"]
 
     course_name = ""
-    if state.course and state.course in courses:
-        course_name = courses[state.course]["name"]
+    if state.course:
+        if state.course in courses:
+            course_name = courses[state.course]["name"]
+        else:
+            course_name = state.course  # 自定义课程名（来自"其他课程"输入）
 
     data = {
         "scene": scene_id,
@@ -240,7 +244,7 @@ def go_quick(args, state: AppState, characters: dict, courses: dict):
         sys.exit(1)
 
     # 验证状态引用
-    state = load_state(args)
+    state = load_state(args, full=True)
     validate_state(state, characters, courses)
 
     # 快捷路径允许覆盖 course
@@ -297,7 +301,7 @@ def go_quick(args, state: AppState, characters: dict, courses: dict):
 def start_server(port: int = 8765) -> tuple:
     """启动知识地图面板子进程。返回 (proc, url)。"""
     import socket
-    server_script = SCRIPTS_DIR / "map_server.py"
+    server_script = SCRIPTS_DIR / "knowledge_panel.py"
 
     # 找可用端口
     max_tries = 5
@@ -387,9 +391,18 @@ def render_location(state: AppState, characters: dict, courses: dict):
     shown_keys = set()
 
     for action in loc["actions"]:
+        # 未选课时隐藏需要课程的动作
+        if action.get("needs_course") and state.course is None:
+            continue
+
         available, reason = action_available(action, state, courses)
         key = action["key"]
         shown_keys.add(key)
+
+        # 已选课时"选课程"→"换课程"
+        label = action["label"]
+        if action["type"] == "select_course" and state.course is not None:
+            label = "换课程"
 
         if available:
             # 根据类型加不同颜色
@@ -401,13 +414,15 @@ def render_location(state: AppState, characters: dict, courses: dict):
             elif action["type"] == "script":
                 key_bg = "bright_yellow"
                 key_fg = "#1a1a2e"
+            elif action["type"] == "study_submenu":
+                key_bg = "bright_magenta"
 
             console.print(
                 f"  [[{key_fg} on {key_bg}] [bold] {key} [/bold] [/]] "
-                f"[{label_color}]{action['label']}[/{label_color}]"
+                f"[{label_color}]{label}[/{label_color}]"
             )
         else:
-            console.print(f"  [#555555] [{key}] {action['label']}（{reason}）[/#555555]")
+            console.print(f"  [#555555] [{key}] {label}（{reason}）[/#555555]")
 
     # ── 系统动作（返回/退出） ──
     console.print("")
@@ -426,7 +441,7 @@ def render_location(state: AppState, characters: dict, courses: dict):
     if state.course and state.course in courses:
         status_parts.append(courses[state.course]["name"])
     if state.classmate:
-        status_parts.append("+夏音")
+        status_parts.append("+夏")
     status = "  |  ".join(status_parts) if status_parts else "  -"
     console.print(f"  [#555555]当前: {status}[/#555555]")
 
@@ -470,18 +485,6 @@ def show_teacher_submenu(characters: dict) -> str:
 def show_course_submenu(courses: dict) -> str:
     """显示课程选择子菜单，返回选中的 course id 或 None。"""
     valid_courses = [(k, v) for k, v in courses.items()]
-    if not valid_courses:
-        clear_screen()
-        title = Panel(
-            Align.center(Text("选择课程", style="bold bright_cyan")),
-            box=ROUNDED, border_style="bright_blue", padding=(0, 4),
-        )
-        console.print(title)
-        console.print("\n  [#888888]courses/ 下还没有课程。[/#888888]")
-        console.print("  [#888888]请先将教材放入 course_inbox/，让 AI 助手帮你建课。[/#888888]")
-        console.print("\n  [#888888]按任意键返回...[/#888888]")
-        wait_key()
-        return None
 
     clear_screen()
     title = Panel(
@@ -491,30 +494,83 @@ def show_course_submenu(courses: dict) -> str:
     console.print(title)
     console.print("")
 
-    for i, (cid, cdata) in enumerate(valid_courses, 1):
-        tags = []
-        if cdata.get("has_km"):
-            tags.append("[bright_cyan]KM[/bright_cyan]")
-        if cdata.get("has_cards"):
-            tags.append("[bright_yellow]C[/bright_yellow]")
-        tag_str = f" {' '.join(tags)}" if tags else ""
-        console.print(
-            f"  [[bright_green] [bold]{i}[/bold] [/bright_green]] "
-            f"[bold]{cdata['name']}[/bold]{tag_str}"
-        )
-        if cdata.get("aliases"):
-            alias_str = ", ".join(cdata["aliases"])
-            console.print(f"       [#888888]别名: {alias_str}[/#888888]")
+    if valid_courses:
+        for i, (cid, cdata) in enumerate(valid_courses, 1):
+            tags = []
+            if cdata.get("has_km"):
+                tags.append("[bright_cyan]KM[/bright_cyan]")
+            if cdata.get("has_cards"):
+                tags.append("[bright_yellow]C[/bright_yellow]")
+            tag_str = f" {' '.join(tags)}" if tags else ""
+            console.print(
+                f"  [[bright_green] [bold]{i}[/bold] [/bright_green]] "
+                f"[bold]{cdata['name']}[/bold]{tag_str}"
+            )
+            if cdata.get("aliases"):
+                alias_str = ", ".join(cdata["aliases"])
+                console.print(f"       [#888888]别名: {alias_str}[/#888888]")
+    else:
+        console.print("  [#888888]courses/ 下还没有课程。[/#888888]")
+        console.print("  [#888888]可以直接输入课程名，AI 助手会从 course_inbox/ 建课。[/#888888]")
 
-    console.print(f"\n  [#888888] [b] 返回[/#888888]")
+    console.print("")
+    console.print(
+        f"  [[bright_green] [bold]0[/bold] [/bright_green]] "
+        f"[#ffffff]其他课程（手动输入课程名）[/#ffffff]"
+    )
+    console.print(f"  [#888888] [b] 返回[/#888888]")
 
-    valid_keys = {str(i) for i in range(1, len(valid_courses) + 1)} | {"b"}
+    valid_keys = {str(i) for i in range(0, len(valid_courses) + 1)} | {"b"}
     key = get_key(valid_keys)
     if key == "b":
         return None
+    if key == "0":
+        console.print("\n  [#ffffff]请输入课程名:[/#ffffff] ", end="")
+        custom = input().strip()
+        return custom if custom else None
 
     idx = int(key) - 1
     return valid_courses[idx][0]
+
+
+def show_study_submenu() -> bool:
+    """显示「和夏学习」子菜单。返回 True 表示选择了已实装的功能。"""
+    clear_screen()
+    title = Panel(
+        Align.center(Text("和夏一起学习", style="bold bright_cyan")),
+        box=ROUNDED, border_style="bright_blue", padding=(0, 4),
+    )
+    console.print(title)
+    console.print("")
+    console.print("  [#888888]选一个学习方式：[/#888888]")
+    console.print("")
+
+    # 占位功能列表
+    items = [
+        ("1", "费曼模式", "你给夏讲解概念，她负责提问和挑漏洞"),
+        ("2", "互相出题", "轮流考对方，看谁先卡住"),
+    ]
+
+    for key, label, desc in items:
+        console.print(
+            f"  [[#555555] [bold]{key}[/bold] [/]] "
+            f"[#555555]{label}[/#555555]  [#444444]— {desc}[/#444444]"
+        )
+
+    console.print("")
+    console.print("  [#888888] [b] 返回[/#888888]")
+
+    valid_keys = {"1", "2", "b"}
+    key = get_key(valid_keys)
+
+    if key == "b":
+        return False
+
+    # 所有功能暂未开放
+    console.print("\n  [#888888]这个功能还在准备中，很快就能用了。[/#888888]")
+    console.print("  [#888888]按任意键返回...[/#888888]")
+    wait_key()
+    return False
 
 
 # ── 动作分发 ─────────────────────────────────────────────────
@@ -533,6 +589,9 @@ def dispatch_action(key: str, state: AppState, characters: dict, courses: dict) 
     # 处理系统动作
     if key == "q":
         save_state(state)
+        scene_path = SCRIPTS_DIR / "current_scene.json"
+        if scene_path.exists():
+            scene_path.unlink()
         console.print("\n  [bright_yellow]放学了，明天见！[/bright_yellow]")
         return "exit"
 
@@ -572,6 +631,11 @@ def dispatch_action(key: str, state: AppState, characters: dict, courses: dict) 
                 state.course = cid
             return "continue"
 
+        # ── study_submenu ──
+        if atype == "study_submenu":
+            show_study_submenu()
+            return "continue"
+
         # ── scene ──
         if atype == "scene":
             available, reason = action_available(action, state, courses)
@@ -579,6 +643,10 @@ def dispatch_action(key: str, state: AppState, characters: dict, courses: dict) 
                 console.print(f"\n  [bold bright_red]{reason}[/bold bright_red]")
                 wait_key()
                 return "continue"
+
+            # 自动设置 classmate（如"和夏一起上课"）
+            if action.get("set_classmate"):
+                state.classmate = True
 
             write_scene_file(action["scene_id"], state, characters, courses)
             save_state(state)
@@ -640,7 +708,7 @@ def parse_args():
     )
     parser.add_argument(
         "--classmate", action="store_true",
-        help="启用同学陪读模式（朝仓夏音）",
+        help="启用同学陪读模式（夏）",
     )
     parser.add_argument(
         "--no-state", action="store_true",
@@ -683,6 +751,11 @@ def main():
             console.print(f"  [#888888]知识地图面板: {server_url}[/#888888]")
         except (OSError, RuntimeError) as e:
             console.print(f"  [bold bright_red]无法启动面板: {e}[/bold bright_red]")
+
+    # ── 清理残留 scene 文件，防止干扰新会话 ──
+    scene_path = SCRIPTS_DIR / "current_scene.json"
+    if scene_path.exists():
+        scene_path.unlink()
 
     # ── --go 快捷路径：跳过导航直接进入教学场景 ──
     if args.go:

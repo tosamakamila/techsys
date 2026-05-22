@@ -1,7 +1,7 @@
 """
 _shared.py —— 脚本共享模块
 
-提供 map.py、map_server.py、recommend_node.py、update_knowledge_map.py 共用的函数。
+提供 map.py、knowledge_panel.py、recommend_node.py、update_knowledge_map.py 共用的函数。
 """
 import re
 from pathlib import Path
@@ -10,7 +10,11 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent
 
 
 def scan_characters():
-    """扫描 characters/ 目录，返回 {id: {name, role, folder}} 的 dict。"""
+    """扫描 characters/ 目录，返回 {id: {name, role, folder}} 的 dict。
+
+    每个角色目录需有一个 {folder.name}.md 或 {folder.name}.yaml 文件。
+    优先读取 .yaml（name/id 字段），回退到 .md（首行标题）。
+    """
     chars_dir = PROJECT_ROOT / "characters"
     if not chars_dir.exists():
         return {}
@@ -19,18 +23,37 @@ def scan_characters():
     for folder in sorted(chars_dir.iterdir()):
         if not folder.is_dir() or folder.name.startswith("_"):
             continue
-        md_file = folder / f"{folder.name}.md"
-        if not md_file.exists():
-            continue
 
-        content = md_file.read_text(encoding="utf-8")
-        first_line = content.split("\n")[0].strip()
-        name = first_line.lstrip("#").strip() if first_line.startswith("#") else folder.name
+        # 优先 yaml，回退 md
+        yaml_file = folder / f"{folder.name}.yaml"
+        md_file = folder / f"{folder.name}.md"
+        content = ""
+        name = folder.name
+
+        if yaml_file.exists():
+            text = yaml_file.read_text(encoding="utf-8")
+            content = text
+            # 从 yaml 提取 name 字段
+            for line in text.split("\n"):
+                line = line.strip()
+                if line.startswith("name:"):
+                    name = line.split(":", 1)[1].strip()
+                    break
+        elif md_file.exists():
+            text = md_file.read_text(encoding="utf-8")
+            content = text
+            first_line = text.split("\n")[0].strip()
+            if first_line.startswith("#"):
+                raw = first_line.lstrip("#").strip()
+                # "灵：角色索引" → "灵"
+                name = raw.split("：")[0].split(":")[0].strip()
+        else:
+            continue
 
         is_classmate = ("陪读" in content and "同学" in content) or "classmate" in folder.name.lower()
         role = "classmate" if is_classmate else "teacher"
 
-        has_tutoring = (folder / "supplement_tutoring.md").exists()
+        has_tutoring = (folder / "supplement_tutoring.yaml").exists() or (folder / "supplement_tutoring.md").exists()
 
         characters[folder.name] = {
             "id": folder.name,

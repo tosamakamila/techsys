@@ -7,7 +7,7 @@
 | 触发 | 行为 |
 |------|------|
 | `scripts/current_scene.json` 存在 | 按 scene 加载（见下），加载后**删除该文件** |
-| 「上学」「上课」「复习」「找夏音」等 | 运行 `python scripts/map.py`（脚本写 scene 文件后退出） |
+| 「上学」「上课」「复习」「找夏」等 | 运行 `python scripts/map.py`（脚本写 scene 文件后退出） |
 | 「下课」「今天到这里」 | 下课流程（见下） |
 | 「放学」「走了」 | 直接退出 |
 
@@ -15,17 +15,17 @@
 
 | scene | 加载 |
 |-------|------|
-| `teaching` | 上课启动流程。teacher/course 按 scene 字段。classmate=true 时加读 classroom.md + 夏音 |
-| `tutoring` | teaching 基础上 + `supplement_tutoring.md` |
+| `teaching` | 上课启动流程。teacher/course 按 scene 字段。classmate=true 时加读 classroom.md + 夏(yaml scenes.teaching) |
+| `tutoring` | teaching 基础上 + `supplement_tutoring.yaml` |
 | `review_with_teacher` | 上课启动流程（跳过 `course_folder_protocol.md`）+ `review_lesson.md`（三段式复习循环 + 简化下课流程）。按 scene 的 course 字段定位知识地图 |
-| `chat` | classroom.md + 夏音 + teacher_profile.md，不加载课程 |
-| `study_together` | chat 基础上 + 课程文件 |
+| `chat` | `library_chat.md` + 夏(yaml scenes.chat)，不加载课程、灵、classroom.md |
+| `study_together` | chat 基础上 + 课程文件 + 夏(yaml scenes.study)（图书馆学习模式，费曼/出题等） |
 
 ## 上课启动流程
 
 必读：`teacher/system.md` → `system_detail.md` → `teacher_profile.md` → `characters/<角色名>/<角色名>.md` → `course_folder_protocol.md` → `learner_profile.md`
 
-按需：无课程→`course_inbox_protocol.md`，陪读→`classroom.md`+夏音，课后更新→`templates/after_class_update.md`，教材改写→`templates/textbook_transform.md`，复习课→`templates/review_lesson.md`
+按需：无课程→`course_inbox_protocol.md`，陪读→`classroom.md`+夏，图书馆聊天→`library_chat.md`+夏，课后更新→`templates/after_class_update.md`，教材改写→`templates/textbook_transform.md`，复习课→`templates/review_lesson.md`
 
 ## 课程匹配
 

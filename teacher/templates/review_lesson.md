@@ -10,7 +10,7 @@
 跳过：`course_folder_protocol.md`（不需要课程匹配与长教材分片）
 跳过：`templates/textbook_transform.md`（不生成新教案）
 新增：本文件
-按需：`classroom.md` + 夏音（若 classmate=true）
+按需：`classroom.md` + 夏（若 classmate=true）
 
 ## 前置检查
 
