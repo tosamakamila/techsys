@@ -99,7 +99,11 @@ def main():
     json_mode = False
     for i, arg in enumerate(args):
         if arg == "--top" and i + 1 < len(args):
-            top_n = int(args[i + 1])
+            try:
+                top_n = int(args[i + 1])
+            except ValueError:
+                print(f"警告：--top 参数 '{args[i + 1]}' 不是有效数字，使用默认值 3")
+                top_n = 3
         elif arg == "--json":
             json_mode = True
 
@@ -107,7 +111,11 @@ def main():
 
     if not results:
         if json_mode:
-            state = json.loads((course_dir / "knowledge_map_state.json").read_text(encoding="utf-8"))
+            try:
+                state = json.loads((course_dir / "knowledge_map_state.json").read_text(encoding="utf-8"))
+            except (json.JSONDecodeError, FileNotFoundError, KeyError):
+                print(json.dumps({"error": "无法读取知识地图文件"}, ensure_ascii=False))
+                return
             print(json.dumps({
                 "course": state.get("course", ""),
                 "last_updated": state.get("last_updated", ""),
@@ -120,7 +128,11 @@ def main():
         return
 
     # 加载课程状态
-    state = json.loads((course_dir / "knowledge_map_state.json").read_text(encoding="utf-8"))
+    try:
+        state = json.loads((course_dir / "knowledge_map_state.json").read_text(encoding="utf-8"))
+    except (json.JSONDecodeError, FileNotFoundError, KeyError):
+        print("错误：无法读取知识地图文件")
+        return
 
     if json_mode:
         output_json(results, state["nodes"], state)

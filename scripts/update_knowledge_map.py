@@ -189,9 +189,9 @@ def update_state(state: dict, lesson_data: dict, fragment_status: dict) -> list:
 
         # 应用变更
         if new_status != old_status:
-            from datetime import datetime
+            now = datetime.now().strftime("%Y-%m-%d")
             node["status"] = new_status
-            node["updated"] = datetime.now().strftime("%Y-%m-%d")
+            node["updated"] = now
             changes.append({
                 "node_id": nid,
                 "name": concept,

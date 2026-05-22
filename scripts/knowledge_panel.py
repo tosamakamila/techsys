@@ -51,6 +51,18 @@ def validate_course_id(course_id: str) -> str:
 
 # 内存中的闪卡会话: {session_id: session_data}
 flashcard_sessions = {}
+SESSION_MAX_AGE_SECONDS = 7200  # 2 小时过期
+
+
+def _cleanup_stale_sessions():
+    """清理过期会话，防止内存泄漏。"""
+    now_ts = datetime.now().timestamp()
+    stale = [
+        sid for sid, s in flashcard_sessions.items()
+        if now_ts - s.get("_created", 0) > SESSION_MAX_AGE_SECONDS
+    ]
+    for sid in stale:
+        del flashcard_sessions[sid]
 
 
 def parse_cards(course_id):
@@ -59,7 +71,7 @@ def parse_cards(course_id):
     if not cards_path.exists():
         return []
     text = cards_path.read_text(encoding="utf-8")
-    blocks = re.split(r"\n---\n", text)
+    blocks = re.split(r'\n---\s*\n', text)
     cards = []
     for block in blocks:
         block = block.strip()
@@ -103,7 +115,7 @@ def filter_due_cards(cards, state):
         cid = c["id"]
         if cid not in state["cards"]:
             due.append(c)
-        elif state["cards"][cid].get("next_review", "") <= today:
+        elif state["cards"][cid].get("next_review") and state["cards"][cid].get("next_review", "") <= today:
             due.append(c)
     return due
 
@@ -166,7 +178,7 @@ class MapHandler(BaseHTTPRequestHandler):
 
     def do_GET(self):
         if self.path == "/" or self.path == "/index.html":
-            self._send_html(HTML_PAGE)
+            self._send_html(get_html_page())
 
         elif self.path == "/api/init":
             courses = scan_courses()
@@ -243,7 +255,9 @@ class MapHandler(BaseHTTPRequestHandler):
 
         else:
             self.send_response(404)
+            self.send_header("Content-Type", "text/plain; charset=utf-8")
             self.end_headers()
+            self.wfile.write(b"Not Found")
 
     def do_POST(self):
         content_len = int(self.headers.get("Content-Length", 0))
@@ -279,7 +293,9 @@ class MapHandler(BaseHTTPRequestHandler):
 
             random.shuffle(pool)
 
+            _cleanup_stale_sessions()
             flashcard_sessions[session_id] = {
+                "_created": datetime.now().timestamp(),
                 "course_id": course_id,
                 "mode": mode,
                 "pool": pool,
@@ -384,7 +400,9 @@ class MapHandler(BaseHTTPRequestHandler):
 
         else:
             self.send_response(404)
+            self.send_header("Content-Type", "text/plain; charset=utf-8")
             self.end_headers()
+            self.wfile.write(b"Not Found")
 
     def do_OPTIONS(self):
         self.send_response(200)
@@ -395,9 +413,16 @@ class MapHandler(BaseHTTPRequestHandler):
 
 
 # ═══════════════════════════════════════════════════════════
-#  HTML 页面
+#  HTML 页面（延迟加载）
 TEMPLATE_DIR = Path(__file__).resolve().parent / "templates"
-HTML_PAGE = (TEMPLATE_DIR / "index.html").read_text(encoding="utf-8")
+HTML_PAGE_CACHE = None
+
+
+def get_html_page():
+    global HTML_PAGE_CACHE
+    if HTML_PAGE_CACHE is None:
+        HTML_PAGE_CACHE = (TEMPLATE_DIR / "index.html").read_text(encoding="utf-8")
+    return HTML_PAGE_CACHE
 
 
 # ═══════════════════════════════════════════════════════════

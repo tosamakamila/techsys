@@ -50,8 +50,21 @@ def scan_characters():
         else:
             continue
 
-        is_classmate = ("陪读" in content and "同学" in content) or "classmate" in folder.name.lower()
-        role = "classmate" if is_classmate else "teacher"
+        # 优先从 yaml 字段判断角色，回退到内容关键词
+        role = ""
+        if yaml_file.exists():
+            for line in text.split("\n"):
+                line_stripped = line.strip()
+                if line_stripped.startswith("role:") or line_stripped.startswith("角色:"):
+                    rv = line_stripped.split(":", 1)[1].strip()
+                    if rv in ("classmate", "同学", "陪读"):
+                        role = "classmate"
+                    elif rv in ("teacher", "老师"):
+                        role = "teacher"
+                    break
+        if not role:
+            is_classmate = ("陪读" in content and "同学" in content) or "classmate" in folder.name.lower()
+            role = "classmate" if is_classmate else "teacher"
 
         has_tutoring = (folder / "supplement_tutoring.yaml").exists() or (folder / "supplement_tutoring.md").exists()
 

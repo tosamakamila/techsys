@@ -105,7 +105,7 @@ def build_state(parsed: dict) -> dict:
                 "fragment": node["fragment"],
                 "lesson_plan": f"transformed/{node['fragment']}_{parsed['course']}.md" if node["fragment"] else "",
                 "stuck_detail": "",
-                "updated": None,
+                "updated": "",
             }
 
     # 双向推导：从 depends_on 计算 needed_by

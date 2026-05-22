@@ -129,7 +129,7 @@ def parse_cards(filepath: Path) -> list[dict]:
 def load_state(filepath: Path) -> dict:
     if filepath.exists():
         return json.loads(filepath.read_text(encoding="utf-8"))
-    return {"cards": {}, "last_session": None}
+    return {"cards": {}, "last_session": ""}
 
 
 def save_state(filepath: Path, state: dict):
@@ -486,13 +486,63 @@ def _wait_key():
     m.getch()
 
 
+# ── 课程选择 ───────────────────────────────────────────────────
+def scan_available_courses() -> list[str]:
+    """扫描 card/ 下包含 cards.md 的课程文件夹。"""
+    courses = []
+    if not SCRIPT_DIR.exists():
+        return courses
+    for d in sorted(SCRIPT_DIR.iterdir()):
+        if d.is_dir() and not d.name.startswith("_") and not d.name.startswith("."):
+            if (d / "cards.md").exists():
+                courses.append(d.name)
+    return courses
+
+
+def select_course() -> Optional[str]:
+    """交互式课程选择界面，返回课程名或 None（退出）。"""
+    courses = scan_available_courses()
+    if not courses:
+        console.print("\n[bright_red]✗ 没有找到任何课程，请先在 card/ 下创建课程文件夹和 cards.md[/red]\n")
+        return None
+
+    clear_screen()
+    console.print()
+    console.print(
+        Panel(
+            Align.center("[bold #ffffff]选择要复习的课程[/bold #ffffff]"),
+            border_style="bright_cyan",
+            box=ROUNDED,
+        )
+    )
+    console.print()
+
+    for i, name in enumerate(courses, 1):
+        cp = cards_path(name)
+        card_count = len(parse_cards(cp))
+        console.print(f"  [bold bright_cyan]{i}[/bold bright_cyan]  {name}  [#888888]({card_count} 张卡片)[/#888888]")
+
+    console.print()
+    console.print("  [#888888]按数字选择，或按 [bold #cccccc]Q[/bold #cccccc] 退出[/#888888]")
+
+    import msvcrt as m
+    while True:
+        key = m.getch().decode("utf-8", errors="ignore").lower()
+        if key == "q":
+            return None
+        if key.isdigit():
+            idx = int(key) - 1
+            if 0 <= idx < len(courses):
+                return courses[idx]
+
+
 # ── 入口 ───────────────────────────────────────────────────────
 def main():
     parser = argparse.ArgumentParser(
         description="知识闪卡复习工具",
-        usage="python review.py <课程名> [--mode {all,spaced}]",
+        usage="python review.py [课程名] [--mode {all,spaced}]",
     )
-    parser.add_argument("course", help="课程名称（card/ 下的文件夹名）")
+    parser.add_argument("course", nargs="?", default=None, help="课程名称（card/ 下的文件夹名），不填则从列表选择")
     parser.add_argument(
         "--mode",
         choices=["all", "spaced"],
@@ -500,6 +550,14 @@ def main():
         help="复习模式: all=全部复习, spaced=按时间复习 (默认: all)",
     )
     args = parser.parse_args()
+
+    # 未指定课程 → 交互式选择
+    if args.course is None:
+        chosen = select_course()
+        if chosen is None:
+            console.print("\n[#888888]已取消。[/#888888]\n")
+            sys.exit(0)
+        args.course = chosen
 
     # 检查课程目录
     cd = course_dir(args.course)
@@ -554,7 +612,7 @@ def main():
 
     if args.mode == "spaced":
         console.print(
-            f"[#b0b0b0]上次复习: {st.get('last_session', '从未')}[/#b0b0b0]\n"
+            f"[#b0b0b0]上次复习: {st.get('last_session') or '从未'}[/#b0b0b0]\n"
         )
 
     console.print("[#b0b0b0]按任意键开始...[/#b0b0b0]", end="")

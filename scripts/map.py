@@ -333,7 +333,9 @@ def run_script(cmd_template: list, state: AppState) -> bool:
     """运行子进程脚本，返回 True 表示成功。"""
     cmd = []
     for part in cmd_template:
-        cmd.append(part.format(course_id=state.course or "", teacher=state.teacher or ""))
+        # str.format() 会因花括号崩溃，改用安全替换
+        safe = part.replace("{course_id}", state.course or "").replace("{teacher}", state.teacher or "")
+        cmd.append(safe)
 
     console.print(f"\n  [#888888]启动: {' '.join(cmd)}[/#888888]")
     console.print("  [#888888]脚本结束后将返回地图...[/#888888]\n")
