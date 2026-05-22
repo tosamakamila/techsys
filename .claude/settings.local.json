@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell(python d:\\\\Work_Place\\\\sugeladi\\\\card\\\\_test_parse.py)"
+    ]
+  }
+}

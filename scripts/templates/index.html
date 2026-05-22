@@ -1,0 +1,967 @@
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>苏格拉底式学习系统</title>
+<style>
+:root {
+  --bg: #1a1a1e; --panel-bg: #222228; --sidebar-bg: #1c1c20;
+  --border: #3a3a40; --text: #c0c0c8; --text-dim: #808088;
+  --text-bright: #e8e8f0; --accent: #c8a050; --accent-dim: #6b5530;
+  --action-bg: #282830; --action-hover: #34343c; --action-active: #404048;
+  --scene-bg: #2a2a32; --scene-hover: #383840;
+  --danger-bg: #382020; --danger-hover: #482828;
+  --link: #c8a868; --link-hover: #e0c080;
+  --tag-km: #5a9a9a; --tag-card: #c8a050;
+  --status-stable: #6aaa6a; --status-unstable: #c8a050; --status-stuck: #d07070;
+  --tab-active-bg: #282830; --tab-bg: #1c1c20;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  background: var(--bg); color: var(--text);
+  font-family: "Segoe UI", "Microsoft YaHei", sans-serif;
+  height: 100vh; display: flex; justify-content: center;
+  align-items: stretch; padding: 12px;
+  overflow: hidden;
+}
+
+#app {
+  width: 92vw; max-width: 1400px;
+  display: flex; flex-direction: column;
+  border: 2px solid var(--border); border-radius: 4px;
+  overflow: hidden;
+  box-shadow: 0 0 60px rgba(0,0,0,0.4);
+}
+
+/* ═══ 顶栏 Tab ═══ */
+#tab-bar {
+  display: flex; background: var(--sidebar-bg);
+  border-bottom: 2px solid var(--border);
+}
+.tab-btn {
+  padding: 12px 24px; border: none; background: var(--tab-bg);
+  color: var(--text-dim); font-size: 14px; cursor: pointer;
+  font-family: inherit; border-right: 1px solid var(--border);
+  transition: all 0.15s; letter-spacing: 1px;
+}
+.tab-btn:hover { color: var(--text-bright); background: var(--action-bg); }
+.tab-btn.active { background: var(--panel-bg); color: var(--accent);
+  border-bottom: 2px solid var(--accent); margin-bottom: -2px; }
+
+/* ═══ 主体 ═══ */
+#body-row { display: flex; flex-direction: column; flex: 1; min-height: 0; }
+
+/* ═══ 课程选择栏 ═══ */
+#course-bar { padding: 10px 24px; background: var(--sidebar-bg);
+  border-bottom: 2px solid var(--border); display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+.course-bar-label { font-size: 13px; color: var(--text-dim); }
+#cbar-course-name { font-size: 14px; color: var(--accent); cursor: pointer;
+  text-decoration: underline; font-weight: 500; }
+#cbar-course-name:hover { color: var(--link-hover); }
+#cbar-tags { font-size: 11px; }
+.tag { display: inline-block; font-size: 9px; padding: 1px 5px; border-radius: 2px; margin-left: 3px; }
+.tag-km { background: #2a4a4a; color: #7acccc; }
+.tag-card { background: #3a3020; color: #c8a050; }
+
+/* ═══ 主内容区 ═══ */
+#main { flex: 1; display: flex; flex-direction: column; background: var(--panel-bg); overflow: hidden; min-height: 0; }
+
+/* 视图容器 */
+.view { display: none; flex-direction: column; flex: 1; overflow-y: auto; min-height: 0; }
+.view.active { display: flex; }
+#view-knowledge { overflow: hidden; }
+
+
+/* ── 闪卡视图 ── */
+#fc-setup, #fc-review, #fc-done { padding: 30px; }
+#fc-setup h3, #fc-review h3, #fc-done h3 { color: var(--accent); margin-bottom: 16px; }
+.fc-mode-btn { padding: 10px 20px; margin: 4px; border: 1px solid var(--border);
+  border-radius: 3px; background: var(--action-bg); color: var(--text);
+  font-size: 14px; cursor: pointer; font-family: inherit; }
+.fc-mode-btn:hover { background: var(--action-hover); }
+.fc-mode-btn.active { border-color: var(--accent); background: var(--action-active); }
+#fc-card { background: var(--action-bg); border: 1px solid var(--border);
+  border-radius: 4px; padding: 24px; margin: 16px 0; }
+#fc-question { font-size: 16px; color: var(--text-bright); line-height: 1.7; }
+#fc-answer { margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--border);
+  font-size: 14px; color: #b0d0b0; display: none; }
+#fc-explanation { font-size: 13px; color: var(--text-dim); margin-top: 8px; display: none; }
+.fc-btn { padding: 10px 22px; margin: 4px; border: none; border-radius: 3px;
+  font-size: 14px; cursor: pointer; font-family: inherit; color: #fff; }
+.fc-btn-1 { background: #6a3030; } .fc-btn-1:hover { background: #8a4040; }
+.fc-btn-2 { background: #5a4a20; } .fc-btn-2:hover { background: #7a6a30; }
+.fc-btn-3 { background: #2a4a2a; } .fc-btn-3:hover { background: #3a6a3a; }
+.fc-btn-show { background: #2a3a4a; } .fc-btn-show:hover { background: #3a4a6a; }
+.fc-progress { font-size: 13px; color: var(--text-dim); margin: 8px 0; }
+.fc-bar { height: 6px; background: var(--bg); border-radius: 3px; margin: 8px 0; }
+.fc-bar-fill { height: 100%; border-radius: 3px; transition: width 0.3s; }
+
+/* ── 知识地图视图 ── */
+#km-content { display: flex; flex-direction: column; flex: 1; padding: 16px 24px; overflow: hidden; }
+#km-content h3 { color: var(--accent); margin-bottom: 8px; flex-shrink: 0; }
+.km-node { padding: 10px 14px; margin: 4px 0; border: 1px solid var(--border);
+  border-radius: 3px; background: var(--action-bg); cursor: pointer;
+  display: flex; justify-content: space-between; align-items: center; }
+.km-node:hover { background: var(--action-hover); }
+.km-node .status-dot { width: 10px; height: 10px; border-radius: 50%; margin-right: 10px; flex-shrink: 0; }
+.km-node .node-name { flex: 1; font-size: 13px; }
+.km-node .node-impact { font-size: 11px; color: var(--text-dim); }
+.status-stable { background: var(--status-stable); }
+.status-unstable { background: var(--status-unstable); }
+.status-stuck { background: var(--status-stuck); }
+.status-unlearned { background: #555; }
+
+/* km 顶栏：统计 + 图例合并为一行 */
+#km-topbar { display: flex; align-items: center; gap: 16px; margin-bottom: 10px; flex-shrink: 0; flex-wrap: wrap; }
+#km-stats { display: flex; gap: 8px; }
+.km-stat { padding: 4px 10px; border: 1px solid var(--border); border-radius: 3px;
+  background: var(--action-bg); text-align: center; font-size: 12px; }
+.km-stat .num { font-size: 18px; font-weight: bold; }
+.km-stat .lbl { font-size: 10px; color: var(--text-dim); }
+
+/* ── 知识地图 Canvas ── */
+#km-canvas-wrap { margin: 0; border: 1px solid var(--border); border-radius: 4px;
+  background: var(--bg); overflow: hidden; position: relative;
+  flex: 1; min-height: 350px; cursor: grab; }
+#km-canvas-wrap.grabbing { cursor: grabbing; }
+#km-canvas { display: block; }
+#km-detail { display: none; position: absolute; z-index: 10;
+  padding: 14px 18px; border: 1px solid var(--accent-dim); border-radius: 6px;
+  background: #2a2a32; color: var(--text); font-size: 13px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.5); max-width: 320px;
+  pointer-events: auto; }
+#km-detail h4 { color: var(--accent); margin: 0 0 6px; font-size: 14px; }
+#km-detail .detail-row { margin: 3px 0; }
+#km-detail .detail-row .dl { color: var(--text-dim); font-size: 11px; }
+#km-legend { display: flex; gap: 14px; font-size: 12px; color: var(--text-dim); flex-shrink: 0; }
+#km-legend span { display: flex; align-items: center; gap: 4px; }
+#km-legend .dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+.km-pan-hint { position: absolute; right: 8px; bottom: 6px;
+  font-size: 10px; color: var(--text-dim); opacity: 0.6; pointer-events: none; }
+
+/* ── 推荐 & 节点列表（可折叠） ── */
+.km-section { flex-shrink: 0; margin-top: 10px; border: 1px solid var(--border); border-radius: 4px; overflow: hidden; }
+.km-section-header { display: flex; align-items: center; justify-content: space-between;
+  padding: 8px 14px; background: var(--action-bg); cursor: pointer; user-select: none;
+  font-size: 13px; color: var(--text); }
+.km-section-header:hover { background: var(--action-hover); }
+.km-section-header .arrow { transition: transform 0.2s; font-size: 10px; color: var(--text-dim); }
+.km-section-header .arrow.open { transform: rotate(90deg); }
+.km-section-body { display: none; padding: 10px 14px; background: var(--bg);
+  max-height: 200px; overflow-y: auto; border-top: 1px solid var(--border); }
+.km-section-body.open { display: block; }
+
+.km-rec-item { padding: 8px 12px; margin: 3px 0; border: 1px solid var(--border);
+  border-radius: 3px; background: var(--action-bg); cursor: pointer;
+  display: flex; align-items: center; gap: 10px; }
+.km-rec-item:hover { background: var(--action-hover); }
+.km-rec-item .rec-icon { font-weight: bold; font-size: 14px; flex-shrink: 0; }
+.km-rec-item .rec-name { flex: 1; font-size: 13px; }
+.km-rec-item .rec-impact { font-size: 11px; color: var(--text-dim); }
+
+/* ── 进度视图 ── */
+#pg-content { padding: 24px 32px; }
+#pg-content h3 { color: var(--accent); margin: 16px 0 8px; }
+#pg-content h3:first-child { margin-top: 0; }
+#pg-content pre { background: var(--bg); padding: 14px; border-radius: 3px;
+  font-size: 12px; line-height: 1.6; overflow-x: auto; white-space: pre-wrap;
+  color: var(--text); border: 1px solid var(--border); max-height: 300px; overflow-y: auto; }
+
+/* ── 弹窗 ── */
+.modal-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.7); z-index: 100; justify-content: center; align-items: center; }
+.modal-overlay.active { display: flex; }
+.modal { background: var(--panel-bg); border: 2px solid var(--border); border-radius: 4px;
+  padding: 24px; width: 400px; max-width: 90vw; max-height: 80vh; overflow-y: auto; }
+.modal h3 { color: var(--accent); font-size: 17px; margin-bottom: 14px;
+  padding-bottom: 8px; border-bottom: 1px solid var(--border); }
+.modal-item { display: block; width: 100%; text-align: left; padding: 9px 12px;
+  margin-bottom: 4px; border: 1px solid transparent; border-radius: 3px;
+  background: var(--action-bg); color: var(--text); font-size: 13px;
+  cursor: pointer; font-family: inherit; transition: all 0.15s; }
+.modal-item:hover { background: var(--action-hover); border-color: var(--accent-dim); }
+.modal-item.selected { border-color: var(--accent); background: var(--action-active); }
+.modal-close { display: block; width: 100%; margin-top: 10px; padding: 7px;
+  border: 1px solid var(--border); border-radius: 3px; background: transparent;
+  color: var(--text-dim); font-size: 12px; cursor: pointer; font-family: inherit; text-align: center; }
+.modal-close:hover { color: var(--text-bright); }
+
+/* ── 动画 ── */
+@keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+#loc-content .action-btn { animation: fadeIn 0.15s ease forwards; }
+::-webkit-scrollbar { width: 5px; } ::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+</style>
+</head>
+<body>
+
+<div id="app">
+  <!-- Tab 栏 -->
+  <div id="tab-bar">
+    <button class="tab-btn active" data-tab="knowledge" onclick="switchTab('knowledge')">📊 知识地图</button>
+    <button class="tab-btn" data-tab="flashcard" onclick="switchTab('flashcard')">🃏 闪卡</button>
+    <button class="tab-btn" data-tab="progress" onclick="switchTab('progress')">📋 进度</button>
+  </div>
+
+  <!-- 主体 -->
+  <div id="body-row">
+    <!-- 课程选择栏 -->
+    <div id="course-bar">
+      <span class="course-bar-label">当前课程：</span>
+      <span id="cbar-course-name" onclick="showCourseModal()">点击选择</span>
+      <span id="cbar-tags"></span>
+    </div>
+
+    <!-- 主内容 -->
+    <div id="main">
+
+      <!-- ═══ 闪卡视图 ═══ -->
+      <div class="view" id="view-flashcard">
+        <div id="fc-setup">
+          <h3>🃏 闪卡复习</h3>
+          <p style="color:var(--text-dim);margin-bottom:12px;">选择课程和模式开始复习</p>
+          <div style="margin-bottom:8px;">
+            <span style="color:var(--text-dim);font-size:13px;">模式：</span>
+            <button class="fc-mode-btn active" onclick="setFcMode('all', this)">全部复习</button>
+            <button class="fc-mode-btn" onclick="setFcMode('spaced', this)">间隔复习</button>
+          </div>
+          <div style="margin-bottom:12px;">
+            <span style="color:var(--text-dim);font-size:13px;">课程：</span>
+            <span id="fc-course-label" style="color:var(--accent);cursor:pointer;text-decoration:underline;" onclick="showCourseModal()">
+              <span id="fc-course-name">点击选择</span>
+            </span>
+          </div>
+          <button class="action-btn scene" onclick="startFlashcard()" id="fc-start-btn" disabled>
+            <span class="key-hint">▶</span>开始复习
+          </button>
+        </div>
+        <div id="fc-review" style="display:none;">
+          <div class="fc-progress" id="fc-progress-text"></div>
+          <div class="fc-bar"><div class="fc-bar-fill" id="fc-bar-fill" style="width:0%;background:var(--accent);"></div></div>
+          <div id="fc-card">
+            <div id="fc-question"></div>
+            <div id="fc-answer"></div>
+            <div id="fc-explanation"></div>
+          </div>
+          <div id="fc-buttons" style="margin-top:12px;">
+            <button class="fc-btn fc-btn-show" onclick="showAnswer()">📖 显示答案</button>
+          </div>
+          <div id="fc-rating-buttons" style="display:none;margin-top:8px;">
+            <span style="font-size:13px;color:var(--text-dim);margin-right:8px;">评分：</span>
+            <button class="fc-btn fc-btn-1" onclick="rateCard(1)">1 陌生</button>
+            <button class="fc-btn fc-btn-2" onclick="rateCard(2)">2 有印象</button>
+            <button class="fc-btn fc-btn-3" onclick="rateCard(3)">3 熟悉</button>
+          </div>
+        </div>
+        <div id="fc-done" style="display:none;"></div>
+      </div>
+
+      <!-- ═══ 知识地图视图 ═══ -->
+      <div class="view active" id="view-knowledge">
+        <div id="km-content">
+          <!-- 顶栏：统计 + 图例 -->
+          <div id="km-topbar">
+            <div id="km-stats"></div>
+            <div id="km-legend">
+              <span><span class="dot" style="background:var(--status-stable);"></span>稳固</span>
+              <span><span class="dot" style="background:var(--status-unstable);"></span>不稳</span>
+              <span><span class="dot" style="background:var(--status-stuck);"></span>卡住</span>
+              <span><span class="dot" style="background:#555;"></span>未学</span>
+            </div>
+            <span style="font-size:11px;color:var(--text-dim);margin-left:auto;">右键拖动 · 点击节点</span>
+          </div>
+          <p style="color:var(--text-dim);margin:0 0 6px;flex-shrink:0;font-size:13px;">
+            课程：<span id="km-course-name" style="color:var(--accent);cursor:pointer;text-decoration:underline;" onclick="showCourseModal()">点击选择</span>
+          </p>
+          <!-- Canvas -->
+          <div id="km-canvas-wrap">
+            <canvas id="km-canvas"></canvas>
+            <div id="km-detail"></div>
+            <div class="km-pan-hint">右键拖动平移 · 点击节点</div>
+          </div>
+          <!-- 优先复习推荐（可折叠） -->
+          <div class="km-section" id="km-recommend-wrap" style="display:none;">
+            <div class="km-section-header" onclick="toggleKmSection('km-recommend')">
+              <span>📌 优先复习推荐</span><span class="arrow" id="km-recommend-arrow">▶</span>
+            </div>
+            <div class="km-section-body" id="km-recommend"></div>
+          </div>
+          <!-- 全部节点列表（可折叠） -->
+          <div class="km-section" id="km-nodes-wrap" style="display:none;">
+            <div class="km-section-header" onclick="toggleKmSection('km-nodes')">
+              <span>📋 全部节点</span><span class="arrow" id="km-nodes-arrow">▶</span>
+            </div>
+            <div class="km-section-body" id="km-nodes"></div>
+          </div>
+          <div id="km-empty" style="display:none;color:var(--text-dim);padding:40px;text-align:center;">
+            该课程没有知识地图数据。<br>请先在课程文件夹中创建 knowledge_map.md 并运行 build_knowledge_map.py。
+          </div>
+        </div>
+      </div>
+
+      <!-- ═══ 进度视图 ═══ -->
+      <div class="view" id="view-progress">
+        <div id="pg-content">
+          <h3>📋 课程进度</h3>
+          <p style="color:var(--text-dim);margin-bottom:12px;">
+            课程：<span id="pg-course-name" style="color:var(--accent);cursor:pointer;text-decoration:underline;" onclick="showCourseModal()">点击选择</span>
+          </p>
+          <div id="pg-data"></div>
+          <div id="pg-empty" style="display:none;color:var(--text-dim);padding:40px;text-align:center;">
+            该课程还没有进度数据。<br>先上一节课，课后更新会自动生成进度文件。
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- 弹窗 -->
+<div class="modal-overlay" id="modal-overlay">
+  <div class="modal" id="modal-content"></div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════
+//  全局状态
+// ═══════════════════════════════════════════════════════════
+
+let state = {
+  course:null, courseName:null, activeTab:"knowledge",
+};
+let courses = {};
+let fcSession = null;       // 闪卡会话
+let fcMode = "all";         // 闪卡模式
+let fcWaitingRating = false;
+
+// ═══════════════════════════════════════════════════════════
+//  API
+// ═══════════════════════════════════════════════════════════
+
+async function api(path, method="GET", body=null) {
+  const opts = {method};
+  if (body) { opts.headers = {"Content-Type":"application/json"}; opts.body = JSON.stringify(body); }
+  const res = await fetch(path, opts);
+  return res.json();
+}
+
+// ═══════════════════════════════════════════════════════════
+//  Tab 切换
+// ═══════════════════════════════════════════════════════════
+
+function switchTab(tab) {
+  state.activeTab = tab;
+  document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+  document.querySelector(`[data-tab="${tab}"]`).classList.add("active");
+  document.querySelectorAll(".view").forEach(v => v.classList.remove("active"));
+  document.getElementById(`view-${tab}`).classList.add("active");
+
+  if (tab === "knowledge") renderKnowledgeMap();
+  else if (tab === "progress") renderProgress();
+  // flashcard 保持自己的状态，不重新渲染
+}
+
+// ═══════════════════════════════════════════════════════════
+//  课程选择
+// ═══════════════════════════════════════════════════════════
+
+function showModal(html) { document.getElementById("modal-content").innerHTML=html; document.getElementById("modal-overlay").classList.add("active"); }
+function closeModal() { document.getElementById("modal-overlay").classList.remove("active"); }
+document.getElementById("modal-overlay").addEventListener("click", function(e) { if (e.target===this) closeModal(); });
+
+function showCourseModal() {
+  const items = Object.values(courses);
+  if (items.length===0) { showModal("<h3>选择课程</h3><p style='color:var(--text-dim);'>courses/ 下还没有课程。</p><button class='modal-close' onclick='closeModal()'>返回</button>"); return; }
+  let html = "<h3>选择课程</h3>";
+  items.forEach(c => {
+    let tags = (c.has_km?'<span class="tag tag-km">KM</span>':'')+(c.has_cards?'<span class="tag tag-card">C</span>':'');
+    const sel = c.id===state.course?" selected":"";
+    html+=`<button class="modal-item${sel}" onclick="selectCourse('${c.id}')">${c.name} ${tags}</button>`;
+  });
+  html+='<button class="modal-close" onclick="closeModal()">取消</button>';
+  showModal(html);
+}
+
+function selectCourse(cid) {
+  const c = courses[cid];
+  if (c) { state.course=cid; state.courseName=c.name; }
+  closeModal();
+  updateCourseBar();
+  if (state.activeTab==="flashcard") updateFcCourseLabel();
+  else if (state.activeTab==="knowledge") renderKnowledgeMap();
+  else if (state.activeTab==="progress") renderProgress();
+}
+
+function updateCourseBar() {
+  const c = courses[state.course];
+  document.getElementById("cbar-course-name").textContent = state.courseName||"点击选择";
+  let tags = "";
+  if (c) {
+    if (c.has_km) tags += '<span class="tag tag-km">知识地图</span>';
+    if (c.has_cards) tags += '<span class="tag tag-card">闪卡</span>';
+  }
+  document.getElementById("cbar-tags").innerHTML = tags;
+}
+
+// ═══════════════════════════════════════════════════════════
+//  闪卡
+// ═══════════════════════════════════════════════════════════
+
+function updateFcCourseLabel() {
+  document.getElementById("fc-course-name").textContent = state.courseName||"点击选择";
+  document.getElementById("fc-start-btn").disabled = !state.course;
+}
+
+function setFcMode(mode, btn) {
+  fcMode = mode;
+  document.querySelectorAll(".fc-mode-btn").forEach(b => b.classList.remove("active"));
+  btn.classList.add("active");
+}
+
+async function startFlashcard() {
+  if (!state.course) { alert("请先选择课程"); return; }
+  const r = await api("/api/flashcard/start","POST",{ course:state.course, mode:fcMode });
+  if (r.error) { alert(r.error); return; }
+  if (r.done) { showFcDone(r.message,0,0); return; }
+
+  fcSession = r;
+  document.getElementById("fc-setup").style.display="none";
+  document.getElementById("fc-review").style.display="block";
+  document.getElementById("fc-done").style.display="none";
+  fcWaitingRating = false;
+  showFcCard(r.card, r.progress);
+}
+
+function showFcCard(card, prog) {
+  document.getElementById("fc-question").textContent = card.question;
+  document.getElementById("fc-answer").style.display="none";
+  document.getElementById("fc-explanation").style.display="none";
+  document.getElementById("fc-buttons").style.display="block";
+  document.getElementById("fc-rating-buttons").style.display="none";
+  document.getElementById("fc-progress-text").textContent =
+    `第 ${prog.current} / ${prog.total} 张  |  已过关: ${prog.passed}`;
+  const pct = prog.total>0 ? Math.round(prog.current/prog.total*100) : 0;
+  document.getElementById("fc-bar-fill").style.width = pct+"%";
+  fcWaitingRating = false;
+}
+
+async function showAnswer() {
+  if (!fcSession) return;
+  const r = await api("/api/flashcard/rate","POST",
+    { session_id:fcSession.session_id, rating:0, show_answer:true });
+  document.getElementById("fc-answer").textContent = r.answer||"";
+  document.getElementById("fc-answer").style.display="block";
+  document.getElementById("fc-explanation").textContent = r.explanation||"";
+  document.getElementById("fc-explanation").style.display = r.explanation?"block":"none";
+  document.getElementById("fc-buttons").style.display="none";
+  document.getElementById("fc-rating-buttons").style.display="block";
+  fcWaitingRating = true;
+}
+
+async function rateCard(rating) {
+  if (!fcSession || !fcWaitingRating) return;
+  const r = await api("/api/flashcard/rate","POST",
+    { session_id:fcSession.session_id, rating:rating });
+  if (r.done) { showFcDone("复习完成！", r.passed, r.failed); return; }
+  showFcCard(r.card, r.progress);
+}
+
+function showFcDone(msg, passed, failed) {
+  document.getElementById("fc-setup").style.display="none";
+  document.getElementById("fc-review").style.display="none";
+  document.getElementById("fc-done").style.display="block";
+  let html = `<h3>${msg}</h3>`;
+  if (passed+failed > 0) {
+    html += `<div class="km-stats">
+      <div class="km-stat"><div class="num" style="color:var(--status-stable);">${passed}</div><div class="lbl">过关</div></div>
+      <div class="km-stat"><div class="num" style="color:var(--status-stuck);">${failed}</div><div class="lbl">未过关</div></div>
+    </div>`;
+  }
+  html += `<button class="action-btn scene" onclick="resetFlashcard()"><span class="key-hint">↻</span>再来一轮</button>`;
+  document.getElementById("fc-done").innerHTML = html;
+  fcSession = null;
+}
+
+function resetFlashcard() {
+  document.getElementById("fc-setup").style.display="block";
+  document.getElementById("fc-review").style.display="none";
+  document.getElementById("fc-done").style.display="none";
+  updateFcCourseLabel();
+}
+
+// ═══════════════════════════════════════════════════════════
+//  知识地图
+// ═══════════════════════════════════════════════════════════
+
+let kmNodePositions = [];
+let kmPanX = 0, kmPanY = 0;
+let kmRedraw = null; // 重绘函数引用
+
+async function renderKnowledgeMap() {
+  document.getElementById("km-course-name").textContent = state.courseName||"点击选择";
+  document.getElementById("km-stats").innerHTML="";
+  document.getElementById("km-recommend").innerHTML="";
+  document.getElementById("km-nodes").innerHTML="";
+  document.getElementById("km-recommend-wrap").style.display="none";
+  document.getElementById("km-nodes-wrap").style.display="none";
+  document.getElementById("km-canvas-wrap").style.display="none";
+  document.getElementById("km-detail").style.display="none";
+  document.getElementById("km-legend").style.display="none";
+  kmNodePositions = [];
+  kmPanX = 0; kmPanY = 0;
+
+  if (!state.course) {
+    document.getElementById("km-empty").style.display="block";
+    return;
+  }
+
+  const data = await api(`/api/knowledge-map?course=${state.course}`);
+  if (data.error) {
+    document.getElementById("km-empty").style.display="block";
+    return;
+  }
+
+  document.getElementById("km-empty").style.display="none";
+
+  const nodesObj = data.nodes || {};
+  const nodeList = Object.entries(nodesObj).map(([id, n]) => ({ ...n, node_id: id }));
+
+  // 统计
+  const counts = {};
+  nodeList.forEach(n => { counts[n.status] = (counts[n.status]||0)+1; });
+  const labels = { "稳固":"stable","不稳":"unstable","卡住":"stuck","未学":"unlearned" };
+  const colors = { stable:"var(--status-stable)", unstable:"var(--status-unstable)",
+    stuck:"var(--status-stuck)", unlearned:"#555" };
+  let statsHtml = '';
+  for (const [cn,cls] of Object.entries(labels)) {
+    statsHtml += `<div class="km-stat"><div class="num" style="color:${colors[cls]};">${counts[cn]||0}</div><div class="lbl">${cn}</div></div>`;
+  }
+  document.getElementById("km-stats").innerHTML = statsHtml;
+
+  // 依赖图
+  if (nodeList.length > 0) {
+    document.getElementById("km-legend").style.display = "flex";
+    document.getElementById("km-canvas-wrap").style.display = "block";
+    drawDependencyGraph(nodeList);
+  }
+
+  // 推荐（可折叠）
+  const weak = nodeList.filter(n => n.status==="卡住"||n.status==="不稳");
+  weak.sort((a,b) => (b.needed_by||[]).length - (a.needed_by||[]).length);
+  if (weak.length>0) {
+    let recHtml = '';
+    weak.slice(0,5).forEach((n,i) => {
+      const icon = n.status==="卡住"?"[!]":"[~]";
+      const impact = (n.needed_by||[]).length;
+      const impactStr = impact>=5 ? `堵在${n.chapter||"?"}，影响 ${impact} 个后继节点` :
+        impact>=2 ? `影响 ${impact} 个后继节点` :
+        impact===0 ? "无后继依赖，可延后" : "影响 1 个后继节点";
+      recHtml += `<div class="km-rec-item" onclick="showNodeDetail('${n.node_id}')" style="border-left:3px solid ${n.status==='卡住'?'var(--status-stuck)':'var(--status-unstable)'};">
+        <span class="status-dot ${n.status==='卡住'?'status-stuck':'status-unstable'}"></span>
+        <span class="rec-icon">${icon}</span>
+        <span class="rec-name"><b>${escHtml(n.name)}</b> <span style="color:var(--text-dim);">${n.node_id}</span></span>
+        <span class="rec-impact">${impactStr}</span>
+      </div>`;
+    });
+    document.getElementById("km-recommend").innerHTML = recHtml;
+    document.getElementById("km-recommend-wrap").style.display = "";
+  }
+
+  // 全部节点列表（可折叠）
+  let nodesHtml = '';
+  nodeList.forEach(n => {
+    const statusCls = { "稳固":"status-stable","不稳":"status-unstable","卡住":"status-stuck" }[n.status]||"status-unlearned";
+    nodesHtml += `<div class="km-rec-item" onclick="showNodeDetail('${n.node_id}')">
+      <span class="status-dot ${statusCls}"></span>
+      <span class="rec-name">${escHtml(n.name)} <span style="color:var(--text-dim);">${n.node_id}</span></span>
+      <span class="rec-impact">${(n.needed_by||[]).length} 后继</span>
+    </div>`;
+  });
+  document.getElementById("km-nodes").innerHTML = nodesHtml;
+  document.getElementById("km-nodes-wrap").style.display = "";
+}
+
+function computeLayers(nodeList) {
+  const layers = {};
+  const nodeMap = {};
+  nodeList.forEach(n => { nodeMap[n.node_id] = n; });
+
+  function getLayer(nodeId, visited) {
+    if (layers[nodeId] !== undefined) return layers[nodeId];
+    if (!visited) visited = new Set();
+    if (visited.has(nodeId)) return 0;
+    visited.add(nodeId);
+    const n = nodeMap[nodeId];
+    if (!n || !n.depends_on || n.depends_on.length === 0) {
+      layers[nodeId] = 0;
+    } else {
+      let maxDep = 0;
+      n.depends_on.forEach(d => { maxDep = Math.max(maxDep, getLayer(d, visited)); });
+      layers[nodeId] = maxDep + 1;
+    }
+    return layers[nodeId];
+  }
+
+  nodeList.forEach(n => getLayer(n.node_id));
+
+  const layerGroups = {};
+  nodeList.forEach(n => {
+    const l = layers[n.node_id] || 0;
+    if (!layerGroups[l]) layerGroups[l] = [];
+    layerGroups[l].push(n);
+  });
+
+  return { layers, layerGroups, nodeMap };
+}
+
+// ── 绘制知识地图 ──
+
+let kmSelectedNode = null;
+
+function drawDependencyGraph(nodeList) {
+  const wrap = document.getElementById("km-canvas-wrap");
+  const canvas = document.getElementById("km-canvas");
+  const ctx = canvas.getContext("2d");
+
+  const { layerGroups } = computeLayers(nodeList);
+  const sortedLayers = Object.keys(layerGroups).map(Number).sort((a, b) => a - b);
+
+  const nodeW = 165, nodeH = 40;
+  const layerGapX = 210, nodeGapY = 22;
+  const margin = { top: 36, left: 30, right: 30, bottom: 20 };
+
+  const maxNodesInLayer = Math.max(...Object.values(layerGroups).map(a => a.length), 1);
+  const logicW = margin.left + sortedLayers.length * layerGapX + margin.right;
+  const logicH = margin.top + maxNodesInLayer * (nodeH + nodeGapY) + margin.bottom;
+
+  // DPI
+  const dpr = window.devicePixelRatio || 1;
+  canvas.width = logicW * dpr;
+  canvas.height = logicH * dpr;
+  canvas.style.width = logicW + "px";
+  canvas.style.height = logicH + "px";
+
+  function draw() {
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.clearRect(0, 0, logicW, logicH);
+
+    // 背景
+    ctx.fillStyle = "#1a1a1e";
+    ctx.fillRect(0, 0, logicW, logicH);
+    // 点阵
+    ctx.fillStyle = "rgba(200, 160, 80, 0.05)";
+    for (let gx = 20; gx < logicW + 60; gx += 20) {
+      for (let gy = 20; gy < logicH + 60; gy += 20) {
+        const px = ((gx - kmPanX) % (logicW + 60) + logicW + 60) % (logicW + 60);
+        const py = ((gy - kmPanY) % (logicH + 60) + logicH + 60) % (logicH + 60);
+        ctx.beginPath();
+        ctx.arc(px - 30, py - 30, 1, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+    // 章节虚线
+    ctx.strokeStyle = "rgba(120, 120, 130, 0.12)";
+    ctx.lineWidth = 1;
+    ctx.setLineDash([4, 8]);
+    for (let gy = margin.top; gy < logicH; gy += 70) {
+      ctx.beginPath();
+      ctx.moveTo(0, gy);
+      ctx.lineTo(logicW, gy);
+      ctx.stroke();
+    }
+    ctx.setLineDash([]);
+
+    // 应用平移
+    ctx.save();
+    ctx.translate(kmPanX, kmPanY);
+
+    // ── 画边 ──
+    kmNodePositions.forEach(pos => {
+      const deps = pos.node.depends_on || [];
+      deps.forEach(depId => {
+        const src = kmNodePositions.find(p => p.node.node_id === depId);
+        if (!src) return;
+        const x1 = src.x + src.w, y1 = src.cy;
+        const x2 = pos.x, y2 = pos.cy;
+
+        const edgeAlpha = (pos.node.status === "未学" || src.node.status === "未学") ? 0.25 : 0.55;
+        ctx.strokeStyle = `rgba(180,150,100,${edgeAlpha})`;
+        ctx.lineWidth = 1.5;
+        ctx.fillStyle = `rgba(180,150,100,${edgeAlpha})`;
+
+        ctx.beginPath();
+        ctx.moveTo(x1, y1);
+        const cpX = (x1 + x2) / 2;
+        ctx.bezierCurveTo(cpX, y1, cpX, y2, x2, y2);
+        ctx.stroke();
+
+        const arrowSize = 6;
+        ctx.beginPath();
+        ctx.moveTo(x2, y2);
+        ctx.lineTo(x2 - arrowSize, y2 - arrowSize * 0.55);
+        ctx.lineTo(x2 - arrowSize, y2 + arrowSize * 0.55);
+        ctx.closePath();
+        ctx.fill();
+      });
+    });
+
+    // ── 画节点 ──
+    const statusColors = {
+      "稳固": { fill: "#2a4a2a", stroke: "#4a7a4a", glow: "rgba(106,170,106,0.15)" },
+      "不稳": { fill: "#4a4020", stroke: "#8a7020", glow: "rgba(200,160,50,0.12)" },
+      "卡住": { fill: "#4a2020", stroke: "#8a3030", glow: "rgba(200,80,80,0.18)" },
+      "未学": { fill: "#252528", stroke: "#444", glow: "rgba(100,100,100,0.05)" },
+    };
+
+    kmNodePositions.forEach(pos => {
+      const n = pos.node;
+      const sc = statusColors[n.status] || statusColors["未学"];
+      const isSelected = kmSelectedNode === n.node_id;
+
+      // 发光（选中时加强）
+      ctx.fillStyle = isSelected ? sc.glow.replace("0.15", "0.4").replace("0.12", "0.35").replace("0.18", "0.45").replace("0.05", "0.25") : sc.glow;
+      const glowR = isSelected ? 10 : 7;
+      ctx.beginPath();
+      roundedRect(ctx, pos.x - glowR, pos.y - glowR, pos.w + glowR * 2, pos.h + glowR * 2, 10);
+      ctx.fill();
+
+      // 主体
+      ctx.fillStyle = isSelected ? sc.fill.replace("2a", "3a").replace("4a", "5a").replace("25", "35") : sc.fill;
+      ctx.strokeStyle = isSelected ? "#c8a050" : sc.stroke;
+      ctx.lineWidth = isSelected ? 2.5 : 1.8;
+
+      roundedRect(ctx, pos.x, pos.y, pos.w, pos.h, 8);
+      ctx.fill();
+      ctx.stroke();
+
+      // 名称
+      ctx.fillStyle = "#e8e8f0";
+      ctx.font = "bold 13px 'Microsoft YaHei', 'Segoe UI', sans-serif";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      const label = n.name.length > 10 ? n.name.slice(0, 9) + "…" : n.name;
+      ctx.fillText(label, pos.cx, pos.cy - 4);
+
+      // ID
+      ctx.fillStyle = "#808088";
+      ctx.font = "10px 'Microsoft YaHei', 'Segoe UI', sans-serif";
+      ctx.fillText(n.node_id, pos.cx, pos.cy + 14);
+    });
+
+    ctx.restore(); // 平移结束
+  }
+
+  // ── 节点位置计算 ──
+  kmNodePositions = [];
+  sortedLayers.forEach((layerIdx, li) => {
+    const nodesInLayer = layerGroups[layerIdx];
+    const totalHeight = nodesInLayer.length * (nodeH + nodeGapY) - nodeGapY;
+    const startY = margin.top + (maxNodesInLayer * (nodeH + nodeGapY) - totalHeight) / 2;
+    const lx = margin.left + li * layerGapX;
+    nodesInLayer.forEach((n, ni) => {
+      const y = startY + ni * (nodeH + nodeGapY);
+      kmNodePositions.push({ node: n, x: lx, y, w: nodeW, h: nodeH, cx: lx + nodeW / 2, cy: y + nodeH / 2 });
+    });
+  });
+
+  // 初始绘制
+  kmRedraw = draw;
+  draw();
+
+  // ── 右键拖动平移 ──
+  let dragging = false, dragStartX = 0, dragStartY = 0, startPanX = 0, startPanY = 0;
+
+  wrap.oncontextmenu = function(e) { e.preventDefault(); };
+
+  wrap.onmousedown = function(e) {
+    if (e.button === 2) { // 右键
+      e.preventDefault();
+      dragging = true;
+      dragStartX = e.clientX; dragStartY = e.clientY;
+      startPanX = kmPanX; startPanY = kmPanY;
+      wrap.classList.add("grabbing");
+    }
+  };
+
+  window.addEventListener("mousemove", function(e) {
+    if (!dragging) return;
+    kmPanX = startPanX + (e.clientX - dragStartX);
+    kmPanY = startPanY + (e.clientY - dragStartY);
+    draw();
+    document.getElementById("km-detail").style.display = "none";
+    kmSelectedNode = null;
+  });
+
+  window.addEventListener("mouseup", function(e) {
+    if (dragging) {
+      dragging = false;
+      wrap.classList.remove("grabbing");
+    }
+  });
+
+  // ── 左键点击节点 ──
+  wrap.onclick = function(e) {
+    if (dragging) return;
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = logicW / rect.width;
+    const scaleY = logicH / rect.height;
+    const mx = (e.clientX - rect.left) * scaleX - kmPanX;
+    const my = (e.clientY - rect.top) * scaleY - kmPanY;
+
+    for (const pos of kmNodePositions) {
+      if (mx >= pos.x && mx <= pos.x + pos.w && my >= pos.y && my <= pos.y + pos.h) {
+        if (kmSelectedNode === pos.node.node_id) {
+          // 再次点击 → 收起
+          kmSelectedNode = null;
+          document.getElementById("km-detail").style.display = "none";
+        } else {
+          kmSelectedNode = pos.node.node_id;
+          showNodeDetail(pos.node.node_id, e.clientX, e.clientY);
+        }
+        draw();
+        return;
+      }
+    }
+    // 点击空白 → 收起
+    kmSelectedNode = null;
+    document.getElementById("km-detail").style.display = "none";
+    draw();
+  };
+}
+
+function roundedRect(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+  ctx.lineTo(x + w, y + h - r);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  ctx.lineTo(x + r, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+  ctx.lineTo(x, y + r);
+  ctx.quadraticCurveTo(x, y, x + r, y);
+  ctx.closePath();
+}
+
+function toggleKmSection(sectionId) {
+  const body = document.getElementById(sectionId);
+  const arrow = document.getElementById(sectionId + "-arrow");
+  if (!body || !arrow) return;
+  const isOpen = body.classList.toggle("open");
+  arrow.classList.toggle("open", isOpen);
+}
+
+function showNodeDetail(nodeId, cx, cy) {
+  const pos = kmNodePositions.find(p => p.node.node_id === nodeId);
+  if (!pos) return;
+  const n = pos.node;
+
+  const statusText = { "稳固":"✅ 稳固", "不稳":"⚠️ 不稳", "卡住":"❌ 卡住", "未学":"⬜ 未学" };
+  const depsIn = (n.depends_on||[]).map(d => {
+    const p = kmNodePositions.find(x => x.node.node_id === d);
+    return p ? `<span style="color:var(--link);cursor:pointer;text-decoration:underline;" onclick="event.stopPropagation();kmSelectedNode='${d}';showNodeDetail('${d}');kmRedraw&&kmRedraw();">${escHtml(p.node.name)}</span>` : d;
+  }).join(", ") || "无";
+  const depsOut = (n.needed_by||[]).map(d => {
+    const p = kmNodePositions.find(x => x.node.node_id === d);
+    return p ? `<span style="color:var(--link);cursor:pointer;text-decoration:underline;" onclick="event.stopPropagation();kmSelectedNode='${d}';showNodeDetail('${d}');kmRedraw&&kmRedraw();">${escHtml(p.node.name)}</span>` : d;
+  }).join(", ") || "无";
+
+  const detail = document.getElementById("km-detail");
+  detail.innerHTML = `
+    <h4>${escHtml(n.name)} <span style="font-size:11px;color:var(--text-dim);">${n.node_id}</span></h4>
+    <div class="detail-row"><span class="dl">状态</span> ${statusText[n.status]||n.status}</div>
+    <div class="detail-row"><span class="dl">章节</span> ${escHtml(n.chapter||"未知")}</div>
+    <div class="detail-row"><span class="dl">前置依赖</span> ${depsIn}</div>
+    <div class="detail-row"><span class="dl">被依赖</span> ${depsOut}</div>
+    ${n.stuck_detail ? `<div class="detail-row"><span class="dl">卡住详情</span> ${escHtml(n.stuck_detail)}</div>` : ""}
+    ${n.lesson_plan ? `<div class="detail-row"><span class="dl">教案</span> ${escHtml(n.lesson_plan)}</div>` : ""}
+  `;
+  detail.style.display = "block";
+
+  // 定位浮层
+  const wrap = document.getElementById("km-canvas-wrap");
+  const wrapRect = wrap.getBoundingClientRect();
+  let left = (cx || wrapRect.left + wrapRect.width / 3) - wrapRect.left;
+  let top = (cy || wrapRect.top + wrapRect.height / 3) - wrapRect.top;
+  left = Math.max(8, Math.min(left, wrapRect.width - 330));
+  top = Math.max(8, Math.min(top, wrapRect.height - 200));
+  detail.style.left = left + "px";
+  detail.style.top = top + "px";
+}
+
+// ═══════════════════════════════════════════════════════════
+//  进度
+// ═══════════════════════════════════════════════════════════
+
+async function renderProgress() {
+  document.getElementById("pg-course-name").textContent = state.courseName||"点击选择";
+  if (!state.course) {
+    document.getElementById("pg-empty").style.display="block";
+    document.getElementById("pg-data").innerHTML="";
+    return;
+  }
+
+  const data = await api(`/api/progress?course=${state.course}`);
+  if (!data.lesson_state && !data.reading_plan && !data.progress) {
+    document.getElementById("pg-empty").style.display="block";
+    document.getElementById("pg-data").innerHTML="";
+    return;
+  }
+
+  document.getElementById("pg-empty").style.display="none";
+  let html = "";
+  if (data.progress) {
+    html += "<h3>学习进度 (progress.md)</h3>";
+    html += `<pre>${escHtml(data.progress)}</pre>`;
+  }
+  if (data.lesson_state) {
+    html += "<h3>课堂状态 (lesson_state.md)</h3>";
+    html += `<pre>${escHtml(data.lesson_state)}</pre>`;
+  }
+  if (data.reading_plan) {
+    html += "<h3>阅读计划 (reading_plan.md)</h3>";
+    html += `<pre>${escHtml(data.reading_plan)}</pre>`;
+  }
+  document.getElementById("pg-data").innerHTML = html;
+}
+
+function escHtml(s) {
+  return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+}
+
+// ═══════════════════════════════════════════════════════════
+//  键盘
+// ═══════════════════════════════════════════════════════════
+
+document.addEventListener("keydown", function(e) {
+  if (document.getElementById("modal-overlay").classList.contains("active")) {
+    if (e.key==="Escape") closeModal(); return;
+  }
+});
+
+// ═══════════════════════════════════════════════════════════
+//  初始化
+// ═══════════════════════════════════════════════════════════
+
+async function init() {
+  try {
+    const data = await api("/api/init");
+    courses = data.courses||{};
+    updateCourseBar();
+    switchTab("knowledge");
+    updateFcCourseLabel();
+  } catch(err) {
+    document.getElementById("km-content").innerHTML =
+      '<div style="color:#d08080;padding:40px;text-align:center;">'
+      +'<p>无法连接到服务器。</p>'
+      +'<p style="font-size:13px;color:var(--text-dim);">请确认 map_server.py 正在运行。</p></div>';
+  }
+}
+init();
+</script>
+</body>
+</html>

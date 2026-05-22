@@ -1,0 +1,13 @@
+# 开发用文件
+问题箱.md
+responseto问题箱.md
+todo.md
+
+# 运行时状态文件（在 scripts/ 下）
+scripts/current_scene.json
+scripts/map_state.json
+scripts/conversation.json
+
+# Python
+__pycache__/
+*.pyc
