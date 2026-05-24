@@ -62,3 +62,7 @@
 ## 课后更新
 
 见 `after_class_update.md`。
+
+## 引导点标注（可选）
+
+对 knowledge_map 中标记为 `strong` 依赖的关键节点，可在教案中嵌入引导点预案。格式见 `guidance_point_template.md`。一节课不超过 3 个，仅标注最关键的概念转折处。

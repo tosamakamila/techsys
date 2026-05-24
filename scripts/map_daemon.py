@@ -43,23 +43,24 @@ def bold(text):
 # ── 子菜单 ────────────────────────────────────────────────────
 
 def select_teacher(characters: dict):
-    """显示老师列表，返回选中的 teacher id 或 None。"""
-    teachers = [(k, v) for k, v in characters.items() if v["role"] == "teacher"]
-    if not teachers:
-        print("\n  没有可用的老师。")
+    """显示伙伴列表，返回选中的 character id 或 None。"""
+    partners = [(k, v) for k, v in characters.items()]
+    if not partners:
+        print("\n  没有可用的角色。")
         input("  按 Enter 返回...")
         return None
-    if len(teachers) == 1:
-        print(f"\n  自动选择: {teachers[0][1]['name']}")
+    if len(partners) == 1:
+        print(f"\n  自动选择: {partners[0][1]['name']}")
         input("  按 Enter 继续...")
-        return teachers[0][0]
+        return partners[0][0]
 
     clear()
     print()
-    print(f"  {bold('选择老师')}")
+    print(f"  {bold('选择伙伴')}")
     print(f"  {divider()}")
-    for i, (tid, tdata) in enumerate(teachers, 1):
-        print(f"    {i}. {tdata['name']}")
+    for i, (tid, tdata) in enumerate(partners, 1):
+        role = tdata.get("role", "")
+        print(f"    {i}. {tdata['name']}  ({role})")
     print(f"  {divider()}")
     print(f"  [b] 返回")
     print()
@@ -70,8 +71,8 @@ def select_teacher(characters: dict):
             return None
         try:
             idx = int(choice) - 1
-            if 0 <= idx < len(teachers):
-                return teachers[idx][0]
+            if 0 <= idx < len(partners):
+                return partners[idx][0]
         except ValueError:
             pass
         print("  无效选择，重试。")
@@ -119,7 +120,52 @@ def select_course(courses: dict):
         print("  无效选择，重试。")
 
 
-# ── 主循环 ────────────────────────────────────────────────────
+def select_classmate(characters: dict, teacher_id: str):
+    """选择共学伙伴，返回 classmate 字符串或 None。
+
+    返回格式: "ning" / "xia+ning" / "all" / None（不需要）
+    """
+    others = [(k, v) for k, v in characters.items() if k != teacher_id]
+    if not others:
+        print("\n  没有其他角色可选。")
+        input("  按 Enter 继续...")
+        return None
+
+    clear()
+    print()
+    print(f"  {bold('选择共学伙伴')}")
+    print(f"  {divider()}")
+    for i, (cid, cdata) in enumerate(others, 1):
+        role = cdata.get("role", "")
+        print(f"    {i}. {cdata['name']}  ({role})")
+
+    # 组合选项
+    combo_start = len(others) + 1
+    if len(others) >= 2:
+        names = "+".join(cdata["name"] for _, cdata in others)
+        print(f"    {combo_start}. {names}（全部）")
+        combo_start += 1
+    print(f"    {combo_start}. 全部")
+    print(f"  {divider()}")
+    print(f"  [b] 不需要伙伴")
+    print()
+
+    while True:
+        choice = input("  > ").strip().lower()
+        if choice == "b":
+            return None
+        try:
+            idx = int(choice) - 1
+            if 0 <= idx < len(others):
+                return others[idx][0]
+            all_start = len(others)
+            if len(others) >= 2 and idx == all_start:
+                return "+".join(cdata["id"] for _, cdata in others)
+            if idx == all_start + (1 if len(others) >= 2 else 0):
+                return "all"
+        except ValueError:
+            pass
+        print("  无效选择，重试。")
 
 def render(state: AppState, characters: dict, courses: dict):
     """渲染当前位置。"""
@@ -165,18 +211,16 @@ def render(state: AppState, characters: dict, courses: dict):
 
     # 状态栏
     print()
-    status_parts = []
-    if state.teacher and state.teacher in characters:
-        status_parts.append(characters[state.teacher]["name"])
+    loc_desc = loc.get("desc", "")
+    partner_str = loc_desc
+    status_parts = [partner_str] if partner_str else []
     if state.course and state.course in courses:
         status_parts.append(courses[state.course]["name"])
     elif state.course:
         status_parts.append(state.course)
-    if state.classmate:
-        status_parts.append("+夏")
-    status = "  |  ".join(status_parts) if status_parts else "-"
+    status = "  |  ".join(status_parts)
     print(f"  {divider()}")
-    print(f"  当前: {status}")
+    print(f"  {status}")
     print(f"  {divider()}")
     print()
 
@@ -191,9 +235,9 @@ def main():
     state = load_state(no_state=no_state)
     validate_state(state, characters)
 
-    teachers = [v for v in characters.values() if v["role"] == "teacher"]
-    if not teachers:
-        print("characters/ 目录下没有老师角色。按 Enter 退出...")
+    characters_list = list(characters.values())
+    if not characters_list:
+        print("characters/ 目录下没有角色。按 Enter 退出...")
         input()
         sys.exit(1)
 
@@ -259,19 +303,6 @@ def main():
                     save_state(state)
                 break
 
-            elif atype == "study_submenu":
-                clear()
-                print()
-                print(f"  {bold('和夏一起学习')}")
-                print(f"  {divider()}")
-                print("  1. 费曼模式 — 你给夏讲解概念，她提问挑漏洞")
-                print("  2. 互相出题 — 轮流考对方")
-                print(f"  {divider()}")
-                print("  [b] 返回")
-                print()
-                input("  这个功能还在准备中，按 Enter 返回...")
-                break
-
             elif atype == "scene":
                 available, reason = action_available(action, state, courses)
                 if not available:
@@ -279,21 +310,43 @@ def main():
                     input("  按 Enter 继续...")
                     break
 
+                if action.get("teacher"):
+                    state.teacher = action["teacher"]
+
+                # 同学选择
                 if action.get("set_classmate"):
-                    state.classmate = True
+                    state.classmate = select_classmate(characters, state.teacher)
+                else:
+                    state.classmate = None
 
                 write_scene_file(action["scene_id"], state, characters, courses)
                 save_state(state)
 
                 scene_id = action["scene_id"]
-                teacher_name = characters.get(state.teacher, {}).get("name", "?")
+                partner_name = characters.get(state.teacher, {}).get("name", "?")
                 course_name = courses.get(state.course, {}).get("name", "（未选）")
+
+                # classmate 展示
+                classmate_str = ""
+                if state.classmate:
+                    if state.classmate == "all":
+                        classmate_str = " + 全部伙伴"
+                    elif "+" in state.classmate:
+                        names = []
+                        for cid in state.classmate.split("+"):
+                            names.append(characters.get(cid, {}).get("name", cid))
+                        classmate_str = " + " + " + ".join(names)
+                    else:
+                        name = characters.get(state.classmate, {}).get("name", state.classmate)
+                        classmate_str = f" + {name}"
+
                 print(f"\n  场景已就绪: {scene_id}")
-                print(f"  老师: {teacher_name}  |  课程: {course_name}")
+                print(f"  伙伴: {partner_name}{classmate_str}  |  课程: {course_name}")
                 print(f"  切回 Claude 面板说「上课」即可。")
+                print(f"  （可继续在此窗口重新选择）")
                 print()
-                input("  按 Enter 退出...")
-                sys.exit(0)
+                input("  按 Enter 继续...")
+                break
 
             elif atype == "script":
                 print(f"\n  脚本功能请在终端直接运行。")

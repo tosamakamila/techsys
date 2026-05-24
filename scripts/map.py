@@ -6,11 +6,10 @@ map.py —— 命令行入口
 
 用法：
     python scripts/map.py --go --stdout                    续课（捕获 stdout JSON）
-    python scripts/map.py --go --preload --stdout          续课 + 预加载启动文件
     python scripts/map.py --go --stdout --teacher ling     切老师 + 续课
     python scripts/map.py --go --stdout --course uv        切课程 + 续课
     python scripts/map.py --go --stdout --location study   切位置 + 续课
-    python scripts/map.py --go --mode review_with_teacher --stdout   复习
+    python scripts/map.py --go --mode review --stdout      复习
     python scripts/map.py --go --server                    续课 + 启动面板
     python scripts/map.py --server                         仅启动面板
 """
@@ -64,106 +63,6 @@ def start_server(port: int = 8765):
     return proc, url
 
 
-# ── 预加载 ───────────────────────────────────────────────
-
-def _parse_fragment(le_path: Path):
-    """从 lesson_entry.yaml 解析 fragment 字段。"""
-    if not le_path.exists():
-        return None
-    text = le_path.read_text(encoding="utf-8")
-    for line in text.split("\n"):
-        if line.startswith("fragment:"):
-            return line.split(":", 1)[1].strip()
-    return None
-
-
-def _safe_read(path: Path):
-    """安全读取文件，不存在返回 None。"""
-    if path.exists():
-        return path.read_text(encoding="utf-8")
-    return None
-
-
-def _preload_files(scene_id: str, state: AppState, characters: dict, courses: dict):
-    """根据 scene 收集所有启动文件，返回 {relpath: content}。"""
-    files = {}
-
-    # system_detail（所有教学场景）
-    sd = ROOT / "teacher" / "system_detail.md"
-    content = _safe_read(sd)
-    if content:
-        files["teacher/system_detail.md"] = content
-
-    # 角色卡
-    if state.teacher and state.teacher in characters:
-        char_folder = ROOT / characters[state.teacher]["folder"]
-        yaml_file = char_folder / f"{state.teacher}.yaml"
-        content = _safe_read(yaml_file)
-        if content:
-            files[f"characters/{state.teacher}/{state.teacher}.yaml"] = content
-
-    # 课程文件
-    if state.course:
-        course_dir = ROOT / "courses" / state.course
-
-        lp = course_dir / "learner_profile.md"
-        content = _safe_read(lp)
-        if content:
-            files[f"courses/{state.course}/learner_profile.md"] = content
-
-        le = course_dir / "lesson_entry.yaml"
-        le_content = _safe_read(le)
-
-        # teaching/tutoring: 加载对应教案
-        if scene_id in ("teaching", "tutoring") and le.exists():
-            if le_content:
-                files[f"courses/{state.course}/lesson_entry.yaml"] = le_content
-            fragment = _parse_fragment(le)
-            if fragment:
-                matches = list(course_dir.glob(f"transformed/{fragment}_*.md"))
-                if matches:
-                    content = _safe_read(matches[0])
-                    if content:
-                        files[f"courses/{state.course}/transformed/{matches[0].name}"] = content
-
-        # tutoring: 补充辅导材料
-        if scene_id == "tutoring" and state.teacher in characters:
-            char_folder = ROOT / characters[state.teacher]["folder"]
-            st = char_folder / "supplement_tutoring.yaml"
-            content = _safe_read(st)
-            if content:
-                files[f"characters/{state.teacher}/supplement_tutoring.yaml"] = content
-
-        # review_with_teacher
-        if scene_id == "review_with_teacher":
-            if le_content:
-                files[f"courses/{state.course}/lesson_entry.yaml"] = le_content
-            rl = ROOT / "teacher" / "templates" / "review_lesson.md"
-            content = _safe_read(rl)
-            if content:
-                files["teacher/templates/review_lesson.md"] = content
-
-    # 陪读
-    if state.classmate:
-        cm = ROOT / "teacher" / "classroom.md"
-        content = _safe_read(cm)
-        if content:
-            files["teacher/classroom.md"] = content
-        xia_yaml = ROOT / "characters" / "xia" / "xia.yaml"
-        content = _safe_read(xia_yaml)
-        if content:
-            files["characters/xia/xia.yaml"] = content
-
-    # 图书馆
-    if scene_id in ("chat", "study_together"):
-        lc = ROOT / "teacher" / "library_chat.md"
-        content = _safe_read(lc)
-        if content:
-            files["teacher/library_chat.md"] = content
-
-    return files
-
-
 # ── 快捷路径 ─────────────────────────────────────────────
 
 def go_quick(args, characters: dict, courses: dict):
@@ -175,7 +74,7 @@ def go_quick(args, characters: dict, courses: dict):
         if args.teacher:
             state = AppState()
             state.teacher = args.teacher
-            state.location = "study_room" if args.mode == "review_with_teacher" else "classroom"
+            state.location = "study_room" if args.mode == "review" else "classroom"
             if args.course:
                 state.course = args.course
             save_state(state)
@@ -205,7 +104,7 @@ def go_quick(args, characters: dict, courses: dict):
         return [a for a in loc.get("actions", []) if a["type"] == "scene"]
 
     scene_actions = _find_scene_actions(state.location)
-    target_mode = args.mode or "teaching"
+    target_mode = args.mode or "study"
 
     if not any(a.get("scene_id") == target_mode for a in scene_actions):
         for loc_key in LOCATIONS:
@@ -232,9 +131,6 @@ def go_quick(args, characters: dict, courses: dict):
         print(f"错误：{reason}", file=sys.stderr)
         sys.exit(1)
 
-    if scene_action.get("set_classmate"):
-        state.classmate = True
-
     teacher_name = characters.get(state.teacher, {}).get("name", "?")
     course_name = courses.get(state.course, {}).get("name", "（未选）")
 
@@ -249,14 +145,9 @@ def go_quick(args, characters: dict, courses: dict):
 
     if args.stdout:
         save_state(state)
-        if args.preload:
-            files = _preload_files(scene_action["scene_id"], state, characters, courses)
-            preload_path = SCRIPT_DIR / "state" / "_preload.json"
-            preload_path.write_text(json.dumps(
-                {"scene": scene_data, "files": files}, ensure_ascii=False
-            ), encoding="utf-8")
-        else:
-            print(json.dumps(scene_data, ensure_ascii=False))
+        preload_path = SCRIPT_DIR / "state" / "_preload.json"
+        preload_path.write_text(json.dumps(scene_data, ensure_ascii=False), encoding="utf-8")
+        print(json.dumps(scene_data, ensure_ascii=False))
         sys.exit(0)
 
     write_scene_file(scene_action["scene_id"], state, characters, courses)
@@ -276,12 +167,11 @@ def parse_args():
     parser.add_argument("--teacher", metavar="TEACHER_ID", help="预选老师")
     parser.add_argument("--course", metavar="COURSE_ID", help="预选课程")
     parser.add_argument("--location", metavar="LOCATION", help="预选位置")
-    parser.add_argument("--classmate", action="store_true", help="启用陪读模式（夏）")
+    parser.add_argument("--classmate", action="store_true", help="已废弃：共学模式下夏始终在")
     parser.add_argument("--no-state", action="store_true", help="不加载 map_state.json")
     parser.add_argument("--go", action="store_true", help="快速续课")
-    parser.add_argument("--mode", choices=["teaching", "tutoring", "review_with_teacher", "chat", "study_together"], help="教学场景类型")
+    parser.add_argument("--mode", choices=["study", "review", "chat"], help="共学场景类型")
     parser.add_argument("--stdout", action="store_true", help="输出 scene JSON 到 stdout")
-    parser.add_argument("--preload", action="store_true", help="预加载启动文件到 _preload.json")
     parser.add_argument("--server", action="store_true", help="启动知识地图面板")
     parser.add_argument("--port", type=int, default=8765, help="知识面板端口")
     return parser.parse_args()
@@ -311,7 +201,6 @@ def main():
     if not args.server:
         print("用法：")
         print("  python scripts/map.py --go --stdout          续课")
-        print("  python scripts/map.py --go --preload --stdout 续课（预加载）")
         print("  python scripts/map.py --go --stdout --teacher ling --course 动物生理学")
         print("  python scripts/map.py --server                启动知识面板")
         print("  python scripts/map_daemon.py                  终端导航菜单")

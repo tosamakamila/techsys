@@ -16,53 +16,56 @@ SCRIPTS_DIR = Path(__file__).resolve().parent
 LOCATIONS = {
     "gate": {
         "name": "校门口",
-        "flavor": "公告栏上贴着今天的排课",
-        "desc": "今天哪位老师来上课？",
+        "flavor": "灵在自习室，夏在图书馆",
+        "desc": "",
         "actions": [
-            {"key": "1", "label": "灵", "type": "select_teacher", "teacher": "ling"},
+            {"key": "1", "label": "进去", "type": "navigate", "target": "classroom_door"},
         ],
     },
     "classroom_door": {
-        "name": "教室门口",
-        "flavor": "走廊尽头的教室亮着灯",
+        "name": "走廊",
+        "flavor": "三扇门：教室、自习室、图书馆",
         "desc": "",
         "actions": [
-            {"key": "1", "label": "去教室（上课）", "type": "navigate", "target": "classroom"},
-            {"key": "2", "label": "去自习室（复习）", "type": "navigate", "target": "study_room"},
-            {"key": "3", "label": "去找夏", "type": "navigate", "target": "library"},
+            {"key": "1", "label": "去教室（三人）", "type": "navigate", "target": "classroom"},
+            {"key": "2", "label": "去自习室（找灵）", "type": "navigate", "target": "study_room"},
+            {"key": "3", "label": "去图书馆（找夏）", "type": "navigate", "target": "library"},
         ],
     },
     "classroom": {
         "name": "教室",
-        "flavor": "灵在讲台前翻着备课本",
-        "desc": "",
+        "flavor": "灵和夏的笔记本摊在桌上，中间给你留了位置",
+        "desc": "共学",
         "actions": [
             {"key": "1", "label": "选课程", "type": "select_course"},
-            {"key": "2", "label": "正常上课", "type": "scene", "scene_id": "teaching",
-             "needs_course": True},
-            {"key": "3", "label": "课后辅导", "type": "scene", "scene_id": "tutoring",
-             "needs_course": True},
-            {"key": "4", "label": "和夏一起上课", "type": "scene", "scene_id": "teaching",
-             "needs_course": True, "set_classmate": True},
+            {"key": "2", "label": "开始共学", "type": "scene", "scene_id": "study",
+             "needs_course": True, "teacher": "ling", "set_classmate": True},
+            {"key": "3", "label": "开始复习", "type": "scene", "scene_id": "review",
+             "needs_course": True, "teacher": "ling", "set_classmate": True},
         ],
     },
     "study_room": {
         "name": "自习室",
-        "flavor": "自习室亮着暖黄的灯，靠窗的座位空着",
-        "desc": "",
+        "flavor": "灵一个人坐在靠窗的位置，荧光笔在指间转着圈",
+        "desc": "和灵双人共学",
         "actions": [
             {"key": "1", "label": "选课程", "type": "select_course"},
-            {"key": "2", "label": "老师带着复习", "type": "scene", "scene_id": "review_with_teacher",
-             "needs_course": True},
+            {"key": "2", "label": "开始共学", "type": "scene", "scene_id": "study",
+             "needs_course": True, "teacher": "ling"},
+            {"key": "3", "label": "开始复习", "type": "scene", "scene_id": "review",
+             "needs_course": True, "teacher": "ling"},
         ],
     },
     "library": {
         "name": "图书馆",
-        "flavor": "靠窗的位置，夏正在翻笔记本",
-        "desc": "",
+        "flavor": "夏在靠窗的位置，围巾搭在椅背上，抬头看见你进来，眼睛亮了一下",
+        "desc": "和夏双人共学",
         "actions": [
-            {"key": "1", "label": "闲聊", "type": "scene", "scene_id": "chat"},
-            {"key": "2", "label": "学习", "type": "study_submenu"},
+            {"key": "1", "label": "选课程", "type": "select_course"},
+            {"key": "2", "label": "开始共学", "type": "scene", "scene_id": "study",
+             "needs_course": True, "teacher": "xia"},
+            {"key": "3", "label": "开始复习", "type": "scene", "scene_id": "review",
+             "needs_course": True, "teacher": "xia"},
         ],
     },
 }
@@ -75,9 +78,9 @@ class AppState:
     """运行时状态，在内存中维护。"""
     def __init__(self):
         self.location = "gate"
-        self.teacher = None       # teacher id
+        self.teacher = "ling"     # 默认伙伴（灵），导航时自动写入
         self.course = None        # course id
-        self.classmate = False
+        self.classmate = None      # str: "ning" / "xia+ning" / "all" / None
         self.location_stack = []  # 面包屑导航
 
 
@@ -95,9 +98,10 @@ def load_state(no_state: bool = False, full: bool = False):
         data = json.loads(state_path.read_text(encoding="utf-8"))
         state.location = data.get("last_location", "gate")
         if full:
-            state.teacher = data.get("last_teacher")
+            state.teacher = data.get("last_teacher") or "ling"
             state.course = data.get("last_course")
-            state.classmate = data.get("last_classmate", False)
+            cm = data.get("last_classmate", None)
+            state.classmate = cm if cm else None  # 兼容旧 True/False → None
     except (json.JSONDecodeError, KeyError):
         pass
 
@@ -208,30 +212,24 @@ def scan_characters():
         else:
             continue
 
-        # 优先从 yaml 字段判断角色，回退到内容关键词
+        # 从 yaml 读取 role 字段，直接使用原值；回退到内容推断
         role = ""
         if yaml_file.exists():
             for line in text.split("\n"):
                 line_stripped = line.strip()
                 if line_stripped.startswith("role:") or line_stripped.startswith("角色:"):
                     rv = line_stripped.split(":", 1)[1].strip()
-                    if rv in ("classmate", "同学", "陪读"):
-                        role = "classmate"
-                    elif rv in ("teacher", "老师"):
-                        role = "teacher"
+                    if rv:
+                        role = rv
                     break
         if not role:
-            is_classmate = ("陪读" in content and "同学" in content) or "classmate" in folder.name.lower()
-            role = "classmate" if is_classmate else "teacher"
-
-        has_tutoring = (folder / "supplement_tutoring.yaml").exists() or (folder / "supplement_tutoring.md").exists()
+            role = "伙伴"
 
         characters[folder.name] = {
             "id": folder.name,
             "name": name,
             "role": role,
             "folder": str(folder.relative_to(PROJECT_ROOT)),
-            "has_tutoring": has_tutoring,
         }
 
     return characters

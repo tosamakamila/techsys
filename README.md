@@ -25,7 +25,6 @@ sugeladi/
 │   ├── ling/
 │   │   ├── ling.yaml                灵的角色卡（八重神子风）
 │   │   ├── character_backstory.yaml 灵的背景故事（首次/按需）
-│   │   └── supplement_tutoring.yaml 课后辅导补充（辅导模式）
 │   └── xia/
 │       ├── xia.yaml                 夏的角色卡（神里绫华风）
 │       └── xia.md                   索引
@@ -42,7 +41,6 @@ sugeladi/
 │   ├── system_status.py            系统状态摘要
 │   ├── state/             运行时状态目录
 │   │   ├── _preload.json  预加载缓存（map.py --preload 写入）
-│   │   ├── god_mode.json  模式状态
 │   │   └── map_state.json 地图记忆
 │   ├── templates/
 │   │   └── index.html     knowledge_panel 前端页面
@@ -81,10 +79,6 @@ sugeladi/
 4. AI 上课（苏格拉底式教学）
 5. 「下课」→ 总结 + 制卡询问 + `python scripts/after_class.py` 课后更新
 
-**体验模式：**
-- 「沉浸模式」→ god_mode immersive：课堂只显示角色对话，零技术文字
-- 「开发者模式」→ brief / detail / trace / off 四级调试反馈
-
 ---
 
 ## 上课时必读
@@ -104,7 +98,6 @@ sugeladi/
 | 条件 | 加读文件 |
 |------|---------|
 | 同学陪读 | `teacher/classroom.md` + 夏角色卡 |
-| 课后辅导模式 | `supplement_tutoring.yaml` |
 | 课后更新 | `after_class_update.md` |
 | 教材改写 | `textbook_transform.md` |
 | 首次见面/用户要求 | `character_backstory.yaml` |

@@ -617,13 +617,7 @@ CLAUDE.md「去找夏音 → 一起学习」子面板中，「考考我」和「
 
 ---
 
-## 2026-05-23：/god 开发者模式 + map.py 编码修复
-
-### /god 开发者模式
-- 新增 `scripts/god_mode.json` 状态文件（`{"god_mode": true/false}`）
-- `/god` → 写入 true，scene 检测后不加载教学文件，只告知下一步
-- `/god` 再触发 → 写入 false，恢复正常
-- 修改：`CLAUDE.md`（路由表更新 + scene 分发加入 god_mode 检查）、`memory/feedback_god_mode.md`（新建）、`memory/MEMORY.md`
+## 2026-05-23：map.py 编码修复 + 日志书写规范
 
 ### map.py 编码修复
 - PowerShell 弹窗命令避免 Base64 编码中文（`-EncodedCommand` 要求 UTF-16LE）
@@ -632,19 +626,6 @@ CLAUDE.md「去找夏音 → 一起学习」子面板中，「考考我」和「
 ### 日志书写规范
 - 明确 `log.md` 追加在末尾，不插最前面（Claude 之前误插顶部）
 - 修改：`CLAUDE.md` 变更日志节
-
-## 2026-05-23：God Mode 升级——对话触发 + 三级反馈
-
-### God Mode 从布尔开关升级为分级开发者工具
-
-- `scripts/god_mode.json` 结构从 `{god_mode: bool}` 改为 `{level: "off"|"brief"|"detail"|"trace"}`
-- 对话题触发（不用斜杠命令）：
-  - 「开发者模式」→ brief、「详细模式」→ detail、「追踪模式」→ trace、「退出开发」→ off
-  - 「系统状态」→ 显示位置/老师/课程/知识地图统计/连续天数
-  - 「怎么走到这里的」→ 显示路由触发链
-- scene 分发逻辑：按 level 给出对应粒度反馈，非 off 时保留 scene 文件不删
-- 修改：`CLAUDE.md`、`scripts/god_mode.json`、`方案箱/god_mode升级方案.md`
-- 理由：开发时快速获取反馈和定位路由问题，不需要手动翻文件
 
 
 ## 2026-05-24：Token 优化第三轮 — scene 免文件 + 脚本合并 + 对话精简
@@ -698,10 +679,9 @@ CLAUDE.md「去找夏音 → 一起学习」子面板中，「考考我」和「
 ### #5 技能 + 记忆清理
 - skills-lock.json：删除 7 个无关 Vercel 技能（web 部署类，对学习系统无用）
 - C 盘记忆合并：auto_launch + silent_exec → feedback_execution.md（4 记忆 → 3 记忆）
-- god_mode 记忆更新为当前四级体制
 - 理由：清理系统提示词中的噪声技能列表，减少记忆文件索引
 
-涉及文件：CLAUDE.md、system_detail.md、lesson_entry.yaml（新建）、course_folder_protocol.md、after_class_update.md、skills-lock.json、MEMORY.md、feedback_execution.md、feedback_god_mode.md
+涉及文件：CLAUDE.md、system_detail.md、lesson_entry.yaml（新建）、course_folder_protocol.md、after_class_update.md、skills-lock.json、MEMORY.md、feedback_execution.md
 
 ## 2026-05-24：启动流程精简 — 必读链砍半
 
@@ -782,7 +762,7 @@ scripts/
 
 涉及文件：_shared.py、map.py、map_daemon.py（新建）、CLAUDE.md、settings.local.json、feedback_execution.md
 
-## 2026-05-24：沉浸式体验优化 — preload + 沉浸模式
+## 2026-05-24：沉浸式体验优化 — preload 预加载
 
 ### map.py --preload 预加载
 - 新增 `--preload` 参数：搭配 `--go --stdout` 时，静默写入 `scripts/_preload.json`
@@ -798,14 +778,6 @@ scripts/
 - 错误提示不再引用 daemon，改为引导用「上课 ling」等参数形式
 - 理由：用户不需要手动启动 daemon 也能直接上课
 
-### 沉浸模式（god_mode immersive）
-- god_mode 新增第 5 级：`immersive`
-- 课堂中只输出角色对话和场景描写，零技术信息
-- 「停」「下课」直接响应，无确认语
-- 下课流程全静默执行，只在需要用户决策时开口
-- 触发：「沉浸模式」→ `{"level": "immersive"}`，「退出开发」→ `{"level": "off"}`
-- 理由：用户想要纯角色对话体验，不被技术中间步骤打断
-
 ### CLAUDE.md 静默规则强化
 - 文件加载过程不输出任何说明文字（不列文件清单、不说"正在加载"）
 - 路由表更新：上课/复习均使用 --preload --stdout
@@ -813,4 +785,24 @@ scripts/
 ### README 更新
 - 运作流程、上课必读、脚本说明、目录地图同步更新
 
-涉及文件：map.py、CLAUDE.md、README.md、log.md、god_mode.json、feedback_god_mode.md、feedback_execution.md
+涉及文件：map.py、CLAUDE.md、README.md、log.md、feedback_execution.md
+
+## 2026-05-24：系统架构重构 — 去教师化+伙伴共学+课后群聊
+
+- CLAUDE.md：教学内核→共学内核，角色呈现适配伙伴关系，scene 分发精简为 study/review/chat，下课流程新增课后群聊（灵+夏诊断复盘）
+- ling.yaml：角色从苏格拉底式导师→学习伙伴（分析型），teaching→studying，speech/contrast/toward 全部适配
+- xia.yaml：角色从同学陪读者→学习伙伴（直觉型），classroom 功能升级为平等参与
+- system_detail.md：课堂参与者→共学参与者，标准流程适配三人共学
+- system.md：标题+文件分工表更新，删除 tutoring/review_with_teacher/study_together 引用
+- classroom.md：重写为共学互动指南，去除主讲/陪读区分
+- map.py：默认 mode=study，choices 精简为 study/review/chat
+- _shared.py：教室菜单更新（三人共学/复习共学/双人共学），描述语更新
+- 理由：用户要求所有角色都是伙伴，没有老师。模板.md的课后群聊系统比单人总结更好
+- 上课自动启动：无 scene 时弹 daemon 窗口 + 轮询 preload → 检测到自动开场（用户从 daemon 回来课已开好）
+- daemon 状态栏：无 desc 时不再显示"灵 + 夏"，教室 desc "三人共学"→"共学"（避免导航时看起来像已进入共学模式）
+- 共学内核重写：平铺式"不许教"→苏格拉底引导法则（推理支点→指缺口→对方推），system_detail.md 加引导质量自检+失败模式清单（用户反馈引导太弱）
+- 课后群聊→teaching_insights.md：群聊产出教学策略优化记录，≤5条FIFO覆盖（用户要求群聊为教学服务，非观赏）
+- 下课并行化：闪卡+课程文件更新用子代理 deepseek-flash 并行（用户要求减少主上下文消耗）
+- log.md 规范收紧：只记系统/架构变更，不记教学进度（用户要求）
+- 引导法则硬编码：运行前自检门（4项）+ 负向词汇表（`是不是` `对不对` `一样吗` 等9词）+ 50字禁令（结论前不得超50字解释）+ 强制三步法（过程对比）+ 承接桥梁公式（回顾→矛盾→新提问）。更新 CLAUDE.md + system_detail.md（用户提供完整方案设计）
+- 教学洞察格式：散文化列表→结构化表格（推理断层点/交互特征/策略有效性），禁止小说式输出。teaching_insights 写入新增子代理C并行执行

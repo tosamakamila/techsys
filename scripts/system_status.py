@@ -70,6 +70,18 @@ def get_status(json_mode: bool = False):
     # 4. 连续天数（从 progress.md 归档日期推算）
     result["streak"] = _calc_streak(course) if course else 0
 
+    # 5. 依赖图健康检查
+    if course:
+        from .check_deps import check_deps
+        deps_result = check_deps(ROOT / "courses" / course)
+        result["deps_healthy"] = deps_result.get("healthy", True)
+        result["deps_cycles"] = deps_result.get("cycle_count", 0)
+        result["deps_missing"] = deps_result.get("missing_count", 0)
+    else:
+        result["deps_healthy"] = True
+        result["deps_cycles"] = 0
+        result["deps_missing"] = 0
+
     if json_mode:
         return result
     else:
@@ -127,6 +139,17 @@ def _print_status(s: dict):
     updated = s.get("last_updated", "")
     if updated:
         print(f"地图更新：{updated}")
+
+    deps_ok = s.get("deps_healthy", True)
+    if not deps_ok:
+        cycles = s.get("deps_cycles", 0)
+        missing = s.get("deps_missing", 0)
+        parts = []
+        if cycles:
+            parts.append(f"{cycles}个环")
+        if missing:
+            parts.append(f"{missing}个缺失引用")
+        print(f"依赖图：[!!] 异常（{'，'.join(parts)}）-> python scripts/check_deps.py courses/{s.get('course', '')}")
 
 
 def main():
