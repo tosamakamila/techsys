@@ -3,11 +3,19 @@
 responseto问题箱.md
 todo.md
 
-# 运行时状态文件（在 scripts/ 下）
+# 运行时状态文件（scripts/state/ 目录）
 scripts/current_scene.json
-scripts/map_state.json
+scripts/state/
 scripts/conversation.json
 
 # Python
 __pycache__/
 *.pyc
+
+# Claude Code 插件与技能
+.agents/
+.claude/
+
+# 方案文件
+*.plan.md
+plans/

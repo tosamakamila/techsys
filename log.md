@@ -615,3 +615,202 @@ CLAUDE.md「去找夏音 → 一起学习」子面板中，「考考我」和「
 - `_shared.py`：`scan_characters()` 适配 yaml 优先读取，`supplement_tutoring` 支持 .yaml/.md
 - 理由：用户要求名字好打（拼音，4键位）
 
+---
+
+## 2026-05-23：/god 开发者模式 + map.py 编码修复
+
+### /god 开发者模式
+- 新增 `scripts/god_mode.json` 状态文件（`{"god_mode": true/false}`）
+- `/god` → 写入 true，scene 检测后不加载教学文件，只告知下一步
+- `/god` 再触发 → 写入 false，恢复正常
+- 修改：`CLAUDE.md`（路由表更新 + scene 分发加入 god_mode 检查）、`memory/feedback_god_mode.md`（新建）、`memory/MEMORY.md`
+
+### map.py 编码修复
+- PowerShell 弹窗命令避免 Base64 编码中文（`-EncodedCommand` 要求 UTF-16LE）
+- `Read-Host '按 Enter 关闭'` → `pause`
+
+### 日志书写规范
+- 明确 `log.md` 追加在末尾，不插最前面（Claude 之前误插顶部）
+- 修改：`CLAUDE.md` 变更日志节
+
+## 2026-05-23：God Mode 升级——对话触发 + 三级反馈
+
+### God Mode 从布尔开关升级为分级开发者工具
+
+- `scripts/god_mode.json` 结构从 `{god_mode: bool}` 改为 `{level: "off"|"brief"|"detail"|"trace"}`
+- 对话题触发（不用斜杠命令）：
+  - 「开发者模式」→ brief、「详细模式」→ detail、「追踪模式」→ trace、「退出开发」→ off
+  - 「系统状态」→ 显示位置/老师/课程/知识地图统计/连续天数
+  - 「怎么走到这里的」→ 显示路由触发链
+- scene 分发逻辑：按 level 给出对应粒度反馈，非 off 时保留 scene 文件不删
+- 修改：`CLAUDE.md`、`scripts/god_mode.json`、`方案箱/god_mode升级方案.md`
+- 理由：开发时快速获取反馈和定位路由问题，不需要手动翻文件
+
+
+## 2026-05-24：Token 优化第三轮 — scene 免文件 + 脚本合并 + 对话精简
+
+### #2 scene 文件免读写
+- `map.py` 新增 `--stdout` 参数：配合 `--go` 使用时直接输出 scene JSON 到 stdout，跳过写文件→读文件→删文件三步
+- CLAUDE.md 路由表更新：「上课」→ `map.py --go --stdout`（捕获 stdout JSON），「上学/换老师/换课程」→ `map.py`（TUI + 文件机制）
+- 理由：最常用的续课路径不再需要 scene 文件中转
+
+### #3 下课脚本合并
+- 新建 `scripts/after_class.py`：合并 advance_reading.py 和 update_knowledge_map.py
+  - 用法：`python scripts/after_class.py courses/<课程名> --fragment Lxxx --status 已上课 [--next Lxxx] [--review] [--tag] [--km-only]`
+  - 一次执行同时更新 reading_plan.md 和 knowledge_map_state.json
+- CLAUDE.md / after_class_update.md / review_lesson.md 全部引用更新为 after_class.py
+- review_lesson.md 删除单独的「刷新知识地图」步骤（已含在 after_class.py 中）
+- 理由：下课时一个命令替代两个命令，减少 shell 调用
+
+### #4 课堂对话精简规则
+- system_detail.md「对话风格」节新增精简规则：
+  - 不叠用表扬词，一个"对"即可
+  - 不讲结构性过渡语（"那么接下来..."），直接进入下一问
+  - 不用口头禅式引入（"你知道吗...""你有没有想过..."）
+  - 小结限 3-5 条短结论，不展开解释
+  - 不做三明治反馈（表扬+纠正+鼓励），答对直接追深问
+- 理由：AI 生成的教学对话有大量结构性废话和过度表扬
+
+### 撤销默认课程
+- 用户明确不需要默认课程，CLAUDE.md 课程匹配规则恢复为「未指定→先询问」
+- memory MEMORY.md 索引更新
+
+涉及文件：map.py、CLAUDE.md、after_class.py（新建）、after_class_update.md、review_lesson.md、system_detail.md、MEMORY.md
+
+## 2026-05-24：Token 优化第四轮 — 教学内核搬家 + 读/写分家 + 系统清理
+
+### #1 教学内核搬入 CLAUDE.md（免费 token）
+- system_detail.md 的苏式推进循环、深度教学策略、问题设计、讲解边界、对话风格、精简规则全部移入 CLAUDE.md「教学内核」节
+- system_detail.md 瘦为 28 行（仅课堂参与者 + 开场/定位/节奏 + 引用）
+- 新增精简规则：不描述教学动作（直接做，不说"我来问你一个问题"）
+- 理由：CLAUDE.md 自动注入系统提示词不花 Read token，system_detail.md 每次上课要读一次
+
+### #2 lesson_state 读/写分家
+- 新建 `lesson_entry.yaml`（fragment/interrupted_at/stuck/entry_line，~10 行）
+- course_folder_protocol.md 更新：上课时读 lesson_entry.yaml 而非完整 lesson_state.yaml（~52 行）
+- lesson_state.yaml 保留为归档+脚本用（课后读/写）
+- 理由：上课只需要 4 个入口字段，省 ~40 行/课
+
+### #3 conclusions 自动截断
+- after_class_update.md 新增截断规则：保留最近 3 节课结论，更早的只保留标注 ?/需巩固/待巩固 的条目
+- 理由：结论无限累积，3 节课以前的已固化为知识地图节点状态，不需要再读
+
+### #5 技能 + 记忆清理
+- skills-lock.json：删除 7 个无关 Vercel 技能（web 部署类，对学习系统无用）
+- C 盘记忆合并：auto_launch + silent_exec → feedback_execution.md（4 记忆 → 3 记忆）
+- god_mode 记忆更新为当前四级体制
+- 理由：清理系统提示词中的噪声技能列表，减少记忆文件索引
+
+涉及文件：CLAUDE.md、system_detail.md、lesson_entry.yaml（新建）、course_folder_protocol.md、after_class_update.md、skills-lock.json、MEMORY.md、feedback_execution.md、feedback_god_mode.md
+
+## 2026-05-24：启动流程精简 — 必读链砍半
+
+### course_folder_protocol.md 移出必读链
+- 独特内容（长教材读取）合并入 CLAUDE.md「长教材读取」节
+- 其余内容（最小读取、课程匹配、课后更新）与 CLAUDE.md 高度重复
+- 文件保留为参考说明，标注"日常上课不再读取"
+- 理由：省 45 行/课
+
+### course.md 按需加载
+- CLAUDE.md 明确：仅在首次建课或推进到全新章节时加载
+- 日常续课由 lesson_entry.yaml + transformed/ 教案定位，不需要课程目标/章节列表
+- 理由：省 48 行/课
+
+### learner_profile.md 按课程拆分
+- 从 teacher/ 移到 courses/<课程名>/ 下
+- 动物生理学新建专属画像：去掉了 Python/conda/uv 工具链内容（与生理课无关）
+- teacher/learner_profile.md 改为模板
+- CLAUDE.md 必读链：`courses/<课程名>/learner_profile.md`
+- 理由：生理课不再加载 Python 工具链画像，每门课独立维护
+
+涉及文件：CLAUDE.md、course_folder_protocol.md、courses/动物生理学/learner_profile.md（新建）、teacher/learner_profile.md、after_class_update.md
+
+## 2026-05-24：项目清理 — 删除废弃文件
+
+### 删除 4 个废弃文件
+- `scripts/advance_reading.py`：功能已合并到 after_class.py
+- `scripts/update_knowledge_map.py`：功能已合并到 after_class.py
+- `characters/ling/ling.md`：旧角色索引，YAML 迁移后零引用
+- `characters/xia/xia.md`：旧角色索引，YAML 迁移后零引用
+
+### 更新引用
+- CLAUDE.md 静默执行规则：advance_reading.py → after_class.py
+- _shared.py docstring：update_knowledge_map.py → after_class.py
+- README.md：两处 update_knowledge_map.py → after_class.py
+
+## 2026-05-24：map.py 架构减法 — 拆分 + 终端常驻菜单
+
+### 背景
+map.py 1000+ 行融合了 Rich TUI 导航、状态管理、场景交接、知识面板。每次导航弹独立 PowerShell 窗口。用户想要在 VS Code 终端内完成导航，不弹窗、不进聊天上下文。
+
+### 拆分结构
+```
+scripts/
+├── _shared.py          → 扩展（80 → 290 行）：状态管理 + LOCATIONS 移入
+├── map.py              → 精简（1020 → 190 行）：纯后端 --go --stdout + --server
+└── map_daemon.py       → 新增（200 行）：终端常驻菜单（input+print，无依赖）
+```
+
+### _shared.py 扩展
+- 移入 AppState、LOCATIONS、load_state、save_state、validate_state、write_scene_file、action_available
+- map.py 和 map_daemon.py 共享同一套状态逻辑，避免代码重复
+- load_state 参数从 args namespace 解耦为独立参数
+
+### map_daemon.py（新建）
+- 纯标准库：input() + print() + ANSI 加粗，无 Rich，无 msvcrt
+- 在 VS Code 终端启动一次，常驻不退出
+- 完整的导航流程：选老师 → 教室门口 → 选课程 → 进教学场景
+- 面包屑返回（b）+ 放学（q）+ 子菜单（老师/课程列表）
+- 选 scene 后写文件并退出，用户切回 Claude 面板说「上课」
+
+### map.py 精简
+- 删除：全部 Rich TUI 代码（~700 行）、动态氛围函数、按键监听、主循环
+- 保留：go_quick()、start_server()、parse_args()、main()
+- 增强：--teacher、--location 参数覆盖（--course 已有）
+- 无参数时显示用法提示
+
+### 路由更新
+- 「上课」→ map.py --go --stdout
+- 「上课 ling」→ map.py --go --stdout --teacher ling
+- 「换课程 uv」→ map.py --go --stdout --course uv
+- 导航 → 终端 map_daemon.py 或 CLI 参数覆盖
+
+### 清理
+- settings.local.json 删除 Start-Process 权限
+- feedback_execution.md 删除 TUI 弹窗描述
+- Rich 依赖不再需要
+
+涉及文件：_shared.py、map.py、map_daemon.py（新建）、CLAUDE.md、settings.local.json、feedback_execution.md
+
+## 2026-05-24：沉浸式体验优化 — preload + 沉浸模式
+
+### map.py --preload 预加载
+- 新增 `--preload` 参数：搭配 `--go --stdout` 时，静默写入 `scripts/_preload.json`
+- `_preload.json` 含 scene 信息 + 所有启动文件内容（system_detail + 角色卡 + learner_profile + lesson_entry + 教案）
+- preload 模式下 stdout 不输出（静默），所有信息通过 _preload.json 传递
+- 上课流程从 5-6 次工具调用减为 2 次（1 次静默 PowerShell + 1 次 Read）
+- 理由：减少聊天面板中可见的文件读取调用，提升沉浸感
+
+### 首次使用自动创建状态
+- 无 map_state.json 时，提供 --teacher 参数即可自动创建状态（不需 daemon）
+- 自动导航：--mode 不匹配当前位置时自动跳到支持该 mode 的位置
+- 无 --mode 时默认 teaching，自动跳教室
+- 错误提示不再引用 daemon，改为引导用「上课 ling」等参数形式
+- 理由：用户不需要手动启动 daemon 也能直接上课
+
+### 沉浸模式（god_mode immersive）
+- god_mode 新增第 5 级：`immersive`
+- 课堂中只输出角色对话和场景描写，零技术信息
+- 「停」「下课」直接响应，无确认语
+- 下课流程全静默执行，只在需要用户决策时开口
+- 触发：「沉浸模式」→ `{"level": "immersive"}`，「退出开发」→ `{"level": "off"}`
+- 理由：用户想要纯角色对话体验，不被技术中间步骤打断
+
+### CLAUDE.md 静默规则强化
+- 文件加载过程不输出任何说明文字（不列文件清单、不说"正在加载"）
+- 路由表更新：上课/复习均使用 --preload --stdout
+
+### README 更新
+- 运作流程、上课必读、脚本说明、目录地图同步更新
+
+涉及文件：map.py、CLAUDE.md、README.md、log.md、god_mode.json、feedback_god_mode.md、feedback_execution.md

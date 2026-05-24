@@ -23,9 +23,9 @@ import subprocess
 import re
 import random
 from pathlib import Path
-from datetime import datetime, date
+from datetime import datetime, date, timedelta
 from http.server import HTTPServer, BaseHTTPRequestHandler
-from urllib.parse import urlparse, parse_qs as _stdlib_parse_qs
+from urllib.parse import urlparse, parse_qs as _stdlib_parse_qs, unquote
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 
@@ -148,6 +148,151 @@ def update_spaced_state(card_id, session_ratings, state):
     state["cards"][card_id] = card_state
 
 
+def _get_lesson_count(course_id):
+    """从 progress.md 历史归档条目数推算已上课次数。"""
+    pg_path = PROJECT_ROOT / "courses" / course_id / "progress.md"
+    if not pg_path.exists():
+        return 0
+    try:
+        text = pg_path.read_text(encoding="utf-8")
+        count = 0
+        for m in re.finditer(r"^[-*]\s*\d{4}-\d{2}-\d{2}\s*[|（(]", text, re.MULTILINE):
+            count += 1
+        return count
+    except (OSError, ValueError):
+        return 0
+
+
+# ═══════════════════════════════════════════════════════════
+#  统计计算
+# ═══════════════════════════════════════════════════════════
+
+def _compute_stats(course_id):
+    """计算指定课程的学习统计数据。"""
+    result = {
+        "study_dates": [],
+        "streak": 0,
+        "lesson_count": 0,
+        "current_lesson": 0,
+        "current_time": datetime.now().strftime("%Y-%m-%d %H:%M"),
+        "concept_stats": {"stable": 0, "unstable": 0, "stuck": 0, "unlearned": 0},
+        "total_concepts": 0,
+        "hardest_concepts": [],
+    }
+    status_map = {"稳固": "stable", "不稳": "unstable", "卡住": "stuck", "未学": "unlearned"}
+
+    # ── 课次统计 ──
+    lesson_count = _get_lesson_count(course_id)
+    result["lesson_count"] = lesson_count
+    result["current_lesson"] = lesson_count + 1  # 当前是第几节
+
+    # ── 一次性读取知识地图 ──
+    km_path = PROJECT_ROOT / "courses" / course_id / "knowledge_map_state.json"
+    km_nodes = {}
+    if km_path.exists():
+        try:
+            km = json.loads(km_path.read_text(encoding="utf-8"))
+            km_nodes = km.get("nodes", {})
+        except (json.JSONDecodeError, KeyError):
+            pass
+
+    # ── 1. 概念状态统计 ──
+    result["total_concepts"] = len(km_nodes)
+    for n in km_nodes.values():
+        s = n.get("status", "未学")
+        key = status_map.get(s, "unlearned")
+        result["concept_stats"][key] += 1
+
+    # ── 2. 学习日期和连续天数 ──
+    pg_path = PROJECT_ROOT / "courses" / course_id / "progress.md"
+    if pg_path.exists():
+        try:
+            text = pg_path.read_text(encoding="utf-8")
+            dates = set()
+            for m in re.finditer(r"日期[：:]\s*(\d{4}-\d{2}-\d{2})", text):
+                d = m.group(1)
+                try:
+                    date.fromisoformat(d)
+                    dates.add(d)
+                except ValueError:
+                    pass
+            for m in re.finditer(r"^[-*]\s*(\d{4}-\d{2}-\d{2})", text, re.MULTILINE):
+                d = m.group(1)
+                try:
+                    date.fromisoformat(d)
+                    dates.add(d)
+                except ValueError:
+                    pass
+
+            result["study_dates"] = sorted(dates)
+
+            if dates:
+                sorted_dates = sorted(dates, reverse=True)
+                today = date.today()
+                streak = 0
+                check = today
+                if check.isoformat() not in sorted_dates:
+                    check = check - timedelta(days=1)
+                for d_str in sorted_dates:
+                    if d_str == check.isoformat():
+                        streak += 1
+                        check = check - timedelta(days=1)
+                    elif d_str < check.isoformat():
+                        break
+                result["streak"] = streak
+        except (OSError, ValueError):
+            pass
+
+    # ── 3. 最难概念 ──
+    hardest = []
+    seen_names = set()
+
+    # 3a. 从知识地图取"卡住"节点（按影响面排序）
+    for nid, n in km_nodes.items():
+        if n.get("status") == "卡住":
+            impact = len(n.get("needed_by", []))
+            hardest.append({
+                "name": n.get("name", nid),
+                "node_id": nid,
+                "status": "卡住",
+                "review_rounds": 0,
+                "impact": impact,
+            })
+    hardest.sort(key=lambda x: -x["impact"])
+    for sn in hardest:
+        seen_names.add(sn["name"])
+
+    # 3b. 从 review_state 取复习轮次最多的卡片
+    rs_path = PROJECT_ROOT / "card" / course_id / "review_state.json"
+    if rs_path.exists():
+        try:
+            rs = json.loads(rs_path.read_text(encoding="utf-8"))
+            rv_cards = []
+            for cid, cs in rs.get("cards", {}).items():
+                rounds = len(cs.get("history", []))
+                if rounds >= 2:
+                    rv_cards.append((cid[:40], rounds))
+            rv_cards.sort(key=lambda x: -x[1])
+            for name, rounds in rv_cards[:5]:
+                if name not in seen_names:
+                    hardest.append({
+                        "name": name,
+                        "node_id": "",
+                        "status": "不稳",
+                        "review_rounds": rounds,
+                        "impact": 0,
+                    })
+                    seen_names.add(name)
+        except (json.JSONDecodeError, KeyError):
+            pass
+
+    # 按 review_rounds 降序 + impact 降序，取 top 5
+    hardest.sort(key=lambda x: (-x["review_rounds"], -x["impact"]))
+    result["hardest_concepts"] = hardest[:5]
+
+    return result
+
+
 # ═══════════════════════════════════════════════════════════
 #  HTTP 请求处理
 # ═══════════════════════════════════════════════════════════
@@ -173,6 +318,7 @@ class MapHandler(BaseHTTPRequestHandler):
     def _send_html(self, html, status=200):
         self.send_response(status)
         self.send_header("Content-Type", "text/html; charset=utf-8")
+        self.send_header("Cache-Control", "no-cache, no-store, must-revalidate")
         self.end_headers()
         self.wfile.write(html.encode("utf-8"))
 
@@ -243,12 +389,41 @@ class MapHandler(BaseHTTPRequestHandler):
                 result["progress"] = pg_path.read_text(encoding="utf-8")
             self._send_json(result)
 
+        elif self.path.startswith("/api/stats"):
+            params = _get_params(self.path)
+            course_id = params.get("course", "")
+            err = validate_course_id(course_id)
+            if err:
+                self._send_json({"error": err}, 400)
+                return
+            stats = _compute_stats(course_id)
+            self._send_json(stats)
+
         elif self.path.startswith("/api/learner-profile"):
             lp_path = PROJECT_ROOT / "teacher" / "learner_profile.md"
             if lp_path.exists():
                 self._send_json({"content": lp_path.read_text(encoding="utf-8")})
             else:
                 self._send_json({"content": ""})
+
+        elif self.path.startswith("/assets/"):
+            asset_path = TEMPLATE_DIR / unquote(self.path.lstrip("/"))
+            if asset_path.exists() and asset_path.is_file():
+                content_type = "image/png"
+                if asset_path.suffix == ".jpg" or asset_path.suffix == ".jpeg":
+                    content_type = "image/jpeg"
+                elif asset_path.suffix == ".svg":
+                    content_type = "image/svg+xml"
+                self.send_response(200)
+                self.send_header("Content-Type", content_type)
+                self.send_header("Cache-Control", "public, max-age=86400")
+                self.end_headers()
+                self.wfile.write(asset_path.read_bytes())
+            else:
+                self.send_response(404)
+                self.send_header("Content-Type", "text/plain; charset=utf-8")
+                self.end_headers()
+                self.wfile.write(b"Asset Not Found")
 
         elif self.path == "/api/health":
             self._send_json({"status": "ok"})
@@ -415,14 +590,11 @@ class MapHandler(BaseHTTPRequestHandler):
 # ═══════════════════════════════════════════════════════════
 #  HTML 页面（延迟加载）
 TEMPLATE_DIR = Path(__file__).resolve().parent / "templates"
-HTML_PAGE_CACHE = None
 
 
 def get_html_page():
-    global HTML_PAGE_CACHE
-    if HTML_PAGE_CACHE is None:
-        HTML_PAGE_CACHE = (TEMPLATE_DIR / "index.html").read_text(encoding="utf-8")
-    return HTML_PAGE_CACHE
+    # 每次请求都重新读取，方便开发调试
+    return (TEMPLATE_DIR / "index.html").read_text(encoding="utf-8")
 
 
 # ═══════════════════════════════════════════════════════════

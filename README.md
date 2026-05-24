@@ -31,16 +31,22 @@ sugeladi/
 │       └── xia.md                   索引
 │
 ├── scripts/               ← 脚本层
-│   ├── _shared.py         共享函数（scan_courses, compute_transitive_impact 等）
-│   ├── map.py             终端交互式地图导航
+│   ├── _shared.py         共享函数（状态管理 + LOCATIONS + 角色/课程扫描）
+│   ├── map.py             CLI 快捷入口（--go --preload --stdout + --server）
+│   ├── map_daemon.py      终端常驻导航菜单（零 token）
 │   ├── knowledge_panel.py      知识地图可视化面板（HTTP 服务器）
 │   ├── build_knowledge_map.py      从 .md 生成 knowledge_map_state.json
+│   ├── scaffold_knowledge_map.py   从课程文件逆向生成 knowledge_map.md
 │   ├── recommend_node.py           薄弱节点推荐
-│   ├── update_knowledge_map.py     课后更新知识地图状态
+│   ├── after_class.py               课后统一更新（reading_plan + 知识地图）
+│   ├── system_status.py            系统状态摘要
+│   ├── state/             运行时状态目录
+│   │   ├── _preload.json  预加载缓存（map.py --preload 写入）
+│   │   ├── god_mode.json  模式状态
+│   │   └── map_state.json 地图记忆
 │   ├── templates/
 │   │   └── index.html     knowledge_panel 前端页面
-│   ├── current_scene.json 场景交接信号（map.py 写 → AI 读 → AI 删）
-│   └── map_state.json     地图记忆（上次位置/老师/课程）
+│   └── current_scene.json 场景交接信号（daemon 写 → AI 读 → AI 删）
 │
 ├── courses/               ← 具体课程
 │   ├── _template/         课程模板（新建课程时复制）
@@ -69,24 +75,29 @@ sugeladi/
 
 ## 运作流程
 
-1. 用户说「上学」或「上课」→ 运行 `scripts/map.py`
-2. map.py 导航到场景 → 写入 `scripts/current_scene.json` → 退出
-3. AI 启动时检测到 scene 文件 → 按 CLAUDE.md 联邦路由表加载 → 删除 scene 文件
+1. 用户说「上课」→ 运行 `python scripts/map.py --go --preload --stdout`（静默，无 visible 输出）
+2. map.py 打包所有启动文件到 `scripts/state/_preload.json`（scene + system_detail + 角色卡 + 教案等）
+3. AI 读取 `_preload.json`（1 次 Read）→ 直接输出角色对话或场景描写
 4. AI 上课（苏格拉底式教学）
-5. 「下课」→ 总结 + 制卡询问 + 课后更新（CLAUDE.md 处理）
+5. 「下课」→ 总结 + 制卡询问 + `python scripts/after_class.py` 课后更新
+
+**体验模式：**
+- 「沉浸模式」→ god_mode immersive：课堂只显示角色对话，零技术文字
+- 「开发者模式」→ brief / detail / trace / off 四级调试反馈
 
 ---
 
 ## 上课时必读
 
-| 顺序 | 文件 | 内容 |
-|------|------|------|
-| 1 | `teacher/system.md` | 文件分工表 |
-| 2 | `teacher/system_detail.md` | 苏式教学细则 |
-| 3 | `teacher/teacher_profile.md` | 通用教学框架 |
-| 4 | `characters/<角色名>/<角色名>.md` | 角色卡 |
-| 5 | `teacher/course_folder_protocol.md` | 课程匹配协议 |
-| 6 | `teacher/learner_profile.md` | 学习者画像 |
+通过 `--preload` 合并为一次读取，`_preload.json` 包含：
+
+| 文件 | 内容 |
+|------|------|
+| `teacher/system_detail.md` | 课堂参与者 + 标准流程 |
+| `characters/<角色名>/<角色名>.yaml` | 角色卡（YAML） |
+| `courses/<课程名>/learner_profile.md` | 学习者画像（按课程） |
+| `courses/<课程名>/lesson_entry.yaml` | 课节入口（fragment + 卡点 + entry_line） |
+| `courses/<课程名>/transformed/<片段>.md` | 教案（teaching）/ `review_lesson.md`（复习） |
 
 ### 按需加载
 
@@ -114,12 +125,14 @@ sugeladi/
 
 | 脚本 | 用途 |
 |------|------|
-| `map.py` | 终端交互式地图，Rich UI。数字键导航，选场景后写 scene 文件退出 |
+| `map.py` | CLI 快捷入口：`--go --preload --stdout` 续课，`--server` 启动知识面板。首次使用支持参数自动创建状态 |
+| `map_daemon.py` | 终端常驻导航菜单（纯 input+print），零 token。选老师/课程/场景 |
 | `knowledge_panel.py` | HTTP 服务器（127.0.0.1），浏览器可视化：知识地图 Canvas + 闪卡复习 + 课程进度 |
 | `build_knowledge_map.py` | 从 knowledge_map.md 生成 knowledge_map_state.json 骨架 |
+| `scaffold_knowledge_map.py` | 从课程文件逆向生成 knowledge_map.md 草稿 |
 | `recommend_node.py` | 找出薄弱节点，按影响面排序推荐 |
-| `update_knowledge_map.py` | 课后扫描 lesson_state + reading_plan，更新节点状态 |
-| `_shared.py` | 共享函数，消除跨脚本代码重复 |
+| `after_class.py` | 课后统一更新：reading_plan 状态推进 + 知识地图节点状态 |
+| `_shared.py` | 共享函数（状态管理 + 位置定义 + 角色/课程扫描），map.py/daemon/panel 共用 |
 
 ---
 

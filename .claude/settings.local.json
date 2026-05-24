@@ -2,9 +2,11 @@
   "permissions": {
     "allow": [
       "PowerShell(python d:\\\\Work_Place\\\\sugeladi\\\\card\\\\_test_parse.py)",
-      "PowerShell(Start-Process *)",
-      "PowerShell(Remove-Item *)",
-      "PowerShell(*)"
+"PowerShell(Remove-Item *)",
+      "PowerShell(*)",
+      "Bash(powershell *)",
+      "Bash(python scripts/map.py)",
+      "Bash(python scripts/*.py)"
     ]
   }
 }

@@ -31,7 +31,11 @@ def recommend(course_dir: Path, top_n: int = 3) -> list:
         print(f"错误：找不到 {state_path}")
         return []
 
-    state = json.loads(state_path.read_text(encoding="utf-8"))
+    try:
+        state = json.loads(state_path.read_text(encoding="utf-8"))
+    except (json.JSONDecodeError, KeyError):
+        print("错误：知识地图状态文件损坏")
+        sys.exit(1)
     nodes = state["nodes"]
 
     # 收集薄弱节点
@@ -163,5 +167,89 @@ def main():
             print(f"     教案：{r['lesson_plan']}")
 
 
+def dashboard(course_dir: Path):
+    """教师仪表盘：章节级进度条 + 薄弱概念一览"""
+    state_path = course_dir / "knowledge_map_state.json"
+    if not state_path.exists():
+        print(f"错误：找不到 {state_path}")
+        return
+
+    state = json.loads(state_path.read_text(encoding="utf-8"))
+    nodes = state["nodes"]
+
+    # 按章节分组统计
+    chapters = {}
+    for nid, node in nodes.items():
+        ch = node.get("chapter", "未分类")
+        if ch not in chapters:
+            chapters[ch] = {"total": 0, "稳固": 0, "不稳": 0, "卡住": 0, "未学": 0}
+        chapters[ch]["total"] += 1
+        st = node["status"]
+        if st in chapters[ch]:
+            chapters[ch][st] += 1
+
+    BAR_W = 28
+
+    print(f"\n{'='*50}")
+    print(f"  知识地图仪表盘：{state.get('course', '未知')}")
+    print(f"  更新日期：{state.get('last_updated', '无')}")
+    print(f"{'='*50}")
+
+    total_nodes = len(nodes)
+    stable_total = sum(c["稳固"] for c in chapters.values())
+    stuck_total = sum(c["卡住"] for c in chapters.values())
+
+    print(f"\n  总计 {total_nodes} 个节点 | 稳固 {stable_total}/{total_total_ratio(total_nodes, stable_total)} | 卡住 {stuck_total}")
+
+    print(f"\n  ── 章节进度 ──")
+    for ch_name in sorted(chapters.keys()):
+        c = chapters[ch_name]
+        pct = c["稳固"] / c["total"] * 100 if c["total"] > 0 else 0
+        filled = int(BAR_W * c["稳固"] / c["total"]) if c["total"] > 0 else 0
+        bar = "█" * filled + "░" * (BAR_W - filled)
+        stuck_marker = f" ⚠️ {c['卡住']}" if c["卡住"] > 0 else ""
+        unstable_marker = f" ~{c['不稳']}" if c["不稳"] > 0 else ""
+        print(f"  {ch_name:16s} [{bar}] {c['稳固']}/{c['total']} ({pct:.0f}%){stuck_marker}{unstable_marker}")
+
+    # 薄弱概念按影响面排列
+    print(f"\n  ── 薄弱概念（影响面排序）──")
+    weak = []
+    for nid, node in nodes.items():
+        if node["status"] in ("卡住", "不稳"):
+            impact = compute_transitive_impact(nid, nodes)
+            weak.append((nid, node, impact))
+    weak.sort(key=lambda x: -x[2])
+
+    if not weak:
+        print("  无薄弱概念！")
+    else:
+        for nid, node, impact in weak[:8]:
+            sym = "⚠️" if node["status"] == "卡住" else "~"
+            ch = node.get("chapter", "")
+            print(f"  {sym} {nid} {node['name']} [{node['status']}] - 影响 {impact} 个后继 | {ch}")
+        if len(weak) > 8:
+            print(f"  ... 还有 {len(weak) - 8} 个薄弱节点")
+
+    print()
+
+
+def total_total_ratio(total, stable):
+    """返回掌握比例字符串"""
+    if total == 0:
+        return "0%"
+    return f"{stable/total*100:.0f}%"
+
+
 if __name__ == "__main__":
-    main()
+    # 检查是否为仪表盘模式
+    if "--dashboard" in sys.argv:
+        if len(sys.argv) < 2 or sys.argv[1].startswith("--"):
+            print("用法：python scripts/recommend_node.py courses/<课程名> --dashboard")
+            sys.exit(1)
+        course_dir = Path(sys.argv[1])
+        if not course_dir.exists():
+            print(f"错误：找不到课程目录 {course_dir}")
+            sys.exit(1)
+        dashboard(course_dir)
+    else:
+        main()

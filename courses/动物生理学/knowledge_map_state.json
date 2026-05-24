@@ -1,0 +1,196 @@
+{
+  "course": "动物生理学",
+  "last_updated": "2026-05-24",
+  "nodes": {
+    "N001": {
+      "name": "三个研究水平",
+      "chapter": "第1章 绪论",
+      "status": "稳固",
+      "depends_on": [],
+      "needed_by": [
+        "N002"
+      ],
+      "fragment": "L001a",
+      "lesson_plan": "transformed/L001a_动物生理学.md",
+      "stuck_detail": "",
+      "updated": "2026-05-23"
+    },
+    "N002": {
+      "name": "急性与慢性实验",
+      "chapter": "第1章 绪论",
+      "status": "稳固",
+      "depends_on": [
+        "N001"
+      ],
+      "needed_by": [],
+      "fragment": "L001a",
+      "lesson_plan": "transformed/L001a_动物生理学.md",
+      "stuck_detail": "",
+      "updated": "2026-05-23"
+    },
+    "N003": {
+      "name": "生命基本特征",
+      "chapter": "第1章 绪论",
+      "status": "稳固",
+      "depends_on": [],
+      "needed_by": [
+        "N004",
+        "N006"
+      ],
+      "fragment": "L001a",
+      "lesson_plan": "transformed/L001a_动物生理学.md",
+      "stuck_detail": "",
+      "updated": ""
+    },
+    "N004": {
+      "name": "兴奋性概念",
+      "chapter": "第1章 绪论",
+      "status": "稳固",
+      "depends_on": [
+        "N003"
+      ],
+      "needed_by": [
+        "N005"
+      ],
+      "fragment": "L001a",
+      "lesson_plan": "transformed/L001a_动物生理学.md",
+      "stuck_detail": "",
+      "updated": "2026-05-23"
+    },
+    "N005": {
+      "name": "刺激三参数",
+      "chapter": "第1章 绪论",
+      "status": "稳固",
+      "depends_on": [
+        "N004"
+      ],
+      "needed_by": [],
+      "fragment": "L001a",
+      "lesson_plan": "transformed/L001a_动物生理学.md",
+      "stuck_detail": "",
+      "updated": "2026-05-23"
+    },
+    "N006": {
+      "name": "内环境与稳态",
+      "chapter": "第1章 绪论",
+      "status": "稳固",
+      "depends_on": [
+        "N003"
+      ],
+      "needed_by": [
+        "N007",
+        "N008",
+        "N009"
+      ],
+      "fragment": "L001a",
+      "lesson_plan": "transformed/L001a_动物生理学.md",
+      "stuck_detail": "",
+      "updated": "2026-05-23"
+    },
+    "N007": {
+      "name": "神经调节",
+      "chapter": "第1章 绪论",
+      "status": "稳固",
+      "depends_on": [
+        "N006"
+      ],
+      "needed_by": [
+        "N008",
+        "N010"
+      ],
+      "fragment": "L001b",
+      "lesson_plan": "transformed/L001b_动物生理学.md",
+      "stuck_detail": "",
+      "updated": "2026-05-23"
+    },
+    "N008": {
+      "name": "体液调节",
+      "chapter": "第1章 绪论",
+      "status": "稳固",
+      "depends_on": [
+        "N006",
+        "N007"
+      ],
+      "needed_by": [
+        "N010"
+      ],
+      "fragment": "L001b",
+      "lesson_plan": "transformed/L001b_动物生理学.md",
+      "stuck_detail": "",
+      "updated": "2026-05-23"
+    },
+    "N009": {
+      "name": "自身调节",
+      "chapter": "第1章 绪论",
+      "status": "卡住",
+      "depends_on": [
+        "N006"
+      ],
+      "needed_by": [],
+      "fragment": "L001b",
+      "lesson_plan": "transformed/L001b_动物生理学.md",
+      "stuck_detail": "学生在课堂上卡在这个概念上",
+      "updated": "2026-05-24"
+    },
+    "N010": {
+      "name": "三种控制系统概述",
+      "chapter": "第1章 绪论",
+      "status": "稳固",
+      "depends_on": [
+        "N007",
+        "N008"
+      ],
+      "needed_by": [
+        "N011",
+        "N012",
+        "N013"
+      ],
+      "fragment": "L001b",
+      "lesson_plan": "transformed/L001b_动物生理学.md",
+      "stuck_detail": "",
+      "updated": "2026-05-23"
+    },
+    "N011": {
+      "name": "负反馈控制系统",
+      "chapter": "第1章 绪论",
+      "status": "不稳",
+      "depends_on": [
+        "N010"
+      ],
+      "needed_by": [],
+      "fragment": "L001b",
+      "lesson_plan": "transformed/L001b_动物生理学.md",
+      "stuck_detail": "正反馈与负反馈实例区分困难——曾把凝血当负反馈（用目的而非机制判断）",
+      "updated": "2026-05-23"
+    },
+    "N012": {
+      "name": "正反馈控制系统",
+      "chapter": "第1章 绪论",
+      "status": "不稳",
+      "depends_on": [
+        "N010"
+      ],
+      "needed_by": [],
+      "fragment": "L001b",
+      "lesson_plan": "transformed/L001b_动物生理学.md",
+      "stuck_detail": "正反馈与负反馈实例区分困难——曾把凝血当负反馈（用目的而非机制判断）",
+      "updated": "2026-05-23"
+    },
+    "N013": {
+      "name": "前馈控制系统",
+      "chapter": "第1章 绪论",
+      "status": "稳固",
+      "depends_on": [
+        "N010"
+      ],
+      "needed_by": [],
+      "fragment": "L001b",
+      "lesson_plan": "transformed/L001b_动物生理学.md",
+      "stuck_detail": "",
+      "updated": "2026-05-23"
+    }
+  },
+  "chapter_order": [
+    "第1章 绪论"
+  ]
+}

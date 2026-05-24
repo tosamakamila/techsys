@@ -1,147 +1,217 @@
-# 启动效率优化方案
+# 知识地图幻想风改造方案
 
-> 响应体验报告第 1、2 条。两个改动都在 `map.py` 一个文件内，互不冲突。
+## 总体愿景
+
+把知识地图从一个"功能面板"变成一个**冒险者的羊皮地图**——可爱、有探索感、越学越亮。学生在终端上课，在这个页面看自己的冒险进度。
+
+## 视觉参考
+
+- **RoadHub**（RPG 技能树）—— 毛玻璃节点、拖拽交互、暗色底 + 荧光色
+- **Azgaar's Fantasy Map Generator** —— 程序化幻想地图、羊皮纸纹理、墨水标注
+- **Codex Cryptica** —— 羊皮纸边框、墨渍标记、做旧纹理、战争迷雾
+- **Hearthglen UI Kit** —— 羊皮纸/木材/金色镶边的暖色调 RPG 界面
 
 ---
 
-## 一、快速续课：`--go` 参数
+## 需要你生成的图片
 
-### 行为
+### 1. 冒险者小人（核心）
 
-```
-python scripts/map.py --go
-```
-
-跳过整个导航 UI，直接读取 `map_state.json` 的（位置+老师+课程+同学），验证引用有效后写 scene 文件并退出。
-
-### 具体流程
-
-1. 加载 `map_state.json` → 取出 `last_location / last_teacher / last_course / last_classmate`
-2. 验证：老师仍在 `characters/` 下、课程仍在 `courses/` 下
-3. 如果验证失败 → 打印错误提示，退回校门口（或直接报错退出）
-4. 根据 `last_location` 推断 scene：
-   - `classroom` → 同位置的动作表中取 scene 类型动作（正常上课/课后辅导），默认 `teaching`
-   - `study_room` → `review_with_teacher`
-   - `library` → 默认 `chat`
-   - 其他 → 报错（gate/classroom_door 不可直接进入教学场景）
-5. 如果当前位置有多个 scene 动作（如教室有"正常上课"和"课后辅导"），`--go` 默认取第一个 scene 类型动作，可通过 `--mode` 覆盖：
+一个可爱的 Q 版/chibi 风格小冒险者，背面俯视视角（站在地图上的感觉）：
 
 ```
-python scripts/map.py --go                  # 默认教学场景
-python scripts/map.py --go --mode tutoring  # 课后辅导
+提示词（主图——站立待机）：
+A cute chibi adventurer character viewed from behind/top-down perspective,
+small round shape, wearing a tiny brown cloak and a pointed wizard hat,
+carrying a little wooden staff, kawaii style, simple clean design,
+transparent background, soft warm colors, game asset style,
+the character should look like they're exploring a magical world,
+about 200x200 pixels --
+no watermarks, no text, simple flat colors with soft shading
 ```
 
-6. 写 `current_scene.json` → 退出
+如果可以生成同一角色的几个变体姿态（同一张 sprite sheet 更佳）：
 
-### map.py 改动量
-
-- `parse_args()` 加 `--go` 和 `--mode` 参数
-- `main()` 开头：若 `--go` 为真，走快捷路径（加载 state → 验证 → 推断 scene → 写文件 → 直接 return），不进入主循环
-- 约 30 行新增
-
-### 使用场景
-
-| 命令 | 场景 |
+| 姿态 | 用途 |
 |------|------|
-| `python scripts/map.py --go` | 和上次一模一样的课继续上 |
-| `python scripts/map.py --go --course uv` | 换课但同老师同上课模式 |
-| `python scripts/map.py --go --mode tutoring` | 上次上课但这次换辅导模式 |
+| 站立待机 | 默认停在当前节点上 |
+| 迈步前进 | 点击节点后沿路移动 |
+| 举手跳跃 | 概念变为稳固时庆祝 |
+| 坐下看书 | 在稳固节点旁边 |
+| 挠头困惑 | 在卡住节点旁边 |
+
+### 2. 羊皮纸背景纹理
+
+```
+提示词：
+A dark fantasy parchment paper texture, deep brown-gray tones,
+subtle worn edges and stains, very faint decorative border,
+old treasure map feel but dark enough for dark-mode UI,
+seamless tileable 1024x1024, minimalist, not too busy,
+muted earth tones, very subtle grain --
+no watermarks, no text, texture only
+```
+
+### 3. 可选装饰
+
+**A. 罗盘玫瑰**（地图角落装饰）
+```
+提示词：
+A tiny elegant compass rose, gold line art on transparent background,
+simple 4-point star design, fantasy style, 128x128 pixels --
+no watermarks, no text, line art only
+```
+
+**B. 地图标记图标**（宝藏/旗帜/篝火/卷轴）
+```
+提示词：
+A set of 4 tiny cute fantasy map markers on transparent background:
+treasure chest, flag, campfire, scroll,
+all simple gold/amber line art, each about 32x32 pixels,
+minimalist icons matching a fantasy adventure map --
+no watermarks, no text, icons only
+```
 
 ---
 
-## 二、一键启动：`--server` 参数
+## 技术方案
 
-### 行为
+### 布局：从"分层树"变为"力导向网络"
+
+- 当前：固定 X 轴层级排列
+- 改为：力导向布局，节点像神经网络一样自由分布
+- 连线像魔法丝线，粒子沿连线流动
+- 不引入 D3 等额外库，纯 Canvas 2D 手写力导向算法
+
+### 节点设计
+
+圆形发光球体，三层渲染：
 
 ```
-python scripts/map.py --server
+外圈：光晕（CSS glow），半径随熟练度变化
+主体：渐变球体
+内心：高光白点
+
+熟练度 → 视觉效果：
+  未学 → 暗灰球体、无光晕、被"战争迷雾"薄雾笼罩
+  不稳 → 暖黄色球体、微光晕、边缘微微闪动
+  稳固 → 亮金色球体、明显光晕、有呼吸脉动动画
+  卡住 → 暗红色球体、快速闪烁、有裂纹纹理
 ```
 
-在 map.py 启动前/后自动拉起 `knowledge_panel.py` 作为后台进程。map.py 退出时自动关闭 server。
+### 小人系统
 
-### 两种实现路径
-
-**路径 A：map.py 内嵌 server 线程**
-
-```python
-# map.py 新增
-def start_server(port=8765):
-    """在守护线程中启动 HTTP 服务器。"""
-    from knowledge_panel import MapHandler
-    server = HTTPServer(("127.0.0.1", port), MapHandler)
-    thread = threading.Thread(target=server.serve_forever, daemon=True)
-    thread.start()
-    return server, f"http://127.0.0.1:{port}"
+```
+小人状态机：
+  默认：停在当前学习位置的节点上，微微晃动（待机动画）
+  移动：点击节点 → 沿连线路径弹跳移动 → 到达目标
+  到达：目标节点短暂放大 + 光粒子爆发 + 信息面板弹出
+  
+  环境反应：
+    在稳固节点旁 → 小人坐下看书
+    在卡住节点旁 → 小人挠头困惑
+    在未学节点区域 → 站着眺望（迷雾中若隐若现）
+    所有节点稳固 → 小人举手转圈庆祝
 ```
 
-- 优点：一个进程，自动同生命周期
-- 缺点：map.py 和 knowledge_panel.py 的依赖耦合；线程异常处理
-- 改动量：map.py 约 15 行
+### 连线粒子流
 
-**路径 B：map.py 启动时 spawn 子进程**
+```
+依赖方向：粒子从依赖节点流向被依赖节点
 
-```python
-def start_server(port=8765):
-    """启动 knowledge_panel.py 子进程。"""
-    server_script = SCRIPTS_DIR / "knowledge_panel.py"
-    proc = subprocess.Popen(
-        [sys.executable, str(server_script), "--port", str(port), "--no-browser"],
-        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
-    )
-    return proc
+粒子密度由两端熟练度决定：
+  两端稳固 + 稳固 → 密集金色粒子流
+  稳固 + 不稳 → 中等淡黄色粒子流
+  包含未学 → 无粒子，虚线显示
+
+高亮模式下：选中节点的上下游链全亮
+  前置依赖链 → 蓝色粒子流
+  后继依赖链 → 橙色粒子流
+  无关节点 → 半透明淡化
 ```
 
-map.py 退出前 `proc.terminate()`。
+### 战争迷雾
 
-- 优点：进程隔离，改动更少
-- 缺点：Windows 上子进程清理可能不可靠（Ctrl+C 不一定传播到子进程）
-- 改动量：map.py 约 10 行
+```
+每个节点辐射照明范围：
+  未学 → 0 照明（漆黑迷雾覆盖节点周围）
+  不稳 → 微弱照明（迷雾半散，隐约可见连线）
+  稳固 → 完全照明（周围区域清晰，迷雾退散）
 
-### 推荐：路径 A（线程）
+整体效果：学得越多，地图越亮
+```
 
-理由：
-- `--server` 的典型场景是"看一眼知识地图面板，同时用终端导航上课"，生命周期绑定
-- `HTTPServer` 本身就是线程安全的，`serve_forever` 在 daemon 线程中运行，主线程退出时自动结束
-- 路径 B 的 Windows 子进程清理是个真实问题——用户 Ctrl+C 退出 map.py，server 进程可能残留
+### 趣味系统
 
-### 细节
+| 元素 | 触发条件 | 效果 |
+|------|---------|------|
+| 宝箱 | 一个章节所有节点稳固 | 该章节旁出现小宝箱，可点击开箱 |
+| 小动物伙伴 | 连续学习 7 天 | 小人旁边多一只跟着的小猫/小鸟 |
+| 萤火虫粒子 | 晚上 18:00-06:00 | 画布上有萤火虫光点飘动 |
+| 晨曦粒子 | 早上 06:00-10:00 | 温暖的金色光粒从左上角洒落 |
+| 星光 | 深夜 22:00-06:00 | 深蓝暗色光点缓慢漂浮 |
+| 足迹轨迹 | 最近 5 次点击的节点 | 节点间留下发光足迹，慢慢消失 |
+| +XP 飘字 | 节点从不稳 → 稳固 | "+10 EXP" 小字从节点飘起消失 |
+| 篝火 | 当前正在学习的节点 | 节点旁有小篝火动画，小人坐旁边 |
+| 升级特效 | 所有节点稳固 | 全屏金色粒子雨 + 小人举杖庆祝 |
 
-- `--server` 默认端口 8765，`--port` 覆盖
-- `--server` 时不自动打开浏览器（因为用户已经在终端里了），除非加 `--open`
-- map.py 启动时在顶栏显示 server 地址
+### 信息面板
+
+点击节点弹出（替代当前的 `#km-detail`）：
+
+```
+┌──────────────────────┐
+│  ⭐ 动作电位         │
+│  第1章 · ● 稳固      │
+│                      │
+│  前置：静息电位       │
+│  后继：突触传递       │
+│        神经调节       │
+│                      │
+│  [开始复习] [看教案]  │
+└──────────────────────┘
+```
+
+羊皮纸纹理边框 + 卷轴展开动画。
 
 ---
 
-## 三、两个参数可以组合
+## 实施步骤
 
-```
-python scripts/map.py --go --server    # 一键进课堂 + 面板后台
-```
+### 第 1 步：素材准备（你来）
+- 生成小人图片（至少待机姿态）
+- 生成羊皮纸纹理背景
+- 放到 `scripts/templates/assets/`
 
-这是最快的启动路径：一条命令，课堂就绪 + 地图面板在线。
+### 第 2 步：布局重构（我来）
+- 实现力导向布局算法（纯 JS）
+- 替换当前的 `computeLayers` → `forceDirectedLayout`
+- 节点改为圆形光晕球体渲染
+- 连线改为粒子流动画
+
+### 第 3 步：小人接入（我来）
+- 加载小人 sprite
+- 点击移动动画（沿连线路径弹跳）
+- 不同节点状态下的姿态切换
+
+### 第 4 步：趣味系统（我来）
+- 战争迷雾着色器
+- 时间/天气粒子
+- 宝箱/成就系统
+- 足迹轨迹
+- 小动物伙伴
 
 ---
 
-## 四、改动总结
+## 灵感来源
 
-| 参数 | 改动文件 | 新增行数 |
-|------|---------|---------|
-| `--go` | map.py | ~30 行 |
-| `--server` | map.py | ~15 行 |
-| 两者组合 | 无额外改动 | 天然兼容 |
-
-全部改动只在一个文件（`map.py`），不影响其他脚本或协议。
+- [RoadHub](https://github.com/nicepkg/roadhub) — RPG 技能树 UI 交互
+- [Azgaar's Fantasy Map Generator](https://github.com/Azgaar/Fantasy-Map-Generator) — 幻想地图生成
+- Codex Cryptica — 羊皮纸视觉风格
+- Hearthglen — RPG 暖色调 UI 色板
 
 ---
 
-## 五、边界情况处理
+## 改动范围
 
-| 情况 | --go 行为 |
-|------|----------|
-| 首次使用，无 `map_state.json` | 报错提示："还没有上课记录，请先运行 map.py 选择场景" |
-| 上次的老师角色被删除 | 报错提示："上次的老师（XX）已不存在，请重新选择" |
-| 上次的课程被删除 | 回退到选课程，或报错提示换课 |
-| 上次位置是 gate/classroom_door | 报错提示："上次未进入教学场景，请先手动选择" |
-| 教室有多个 scene（上课/辅导）| 默认取第一个 scene 动作，`--mode` 覆盖 |
-| `--server` 端口被占用 | 自动尝试下一个端口（8765→8766→8767）|
-
+仅 `scripts/templates/index.html`（CSS + Canvas JS），后端 `knowledge_panel.py` 不改。

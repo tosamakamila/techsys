@@ -4,108 +4,137 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>苏格拉底式学习系统</title>
 <style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700&display=swap');
+
 :root {
-  --bg: #1a1a1e; --panel-bg: #222228; --sidebar-bg: #1c1c20;
-  --border: #3a3a40; --text: #c0c0c8; --text-dim: #808088;
-  --text-bright: #e8e8f0; --accent: #c8a050; --accent-dim: #6b5530;
-  --action-bg: #282830; --action-hover: #34343c; --action-active: #404048;
-  --scene-bg: #2a2a32; --scene-hover: #383840;
-  --danger-bg: #382020; --danger-hover: #482828;
+  --bg: #141418; --panel-bg: #1e1e24; --sidebar-bg: #18181c;
+  --border: #2e2e36; --text: #b8b8c0; --text-dim: #6e6e78;
+  --text-bright: #e4e4ec; --accent: #c8a050; --accent-dim: #5a4828;
+  --accent-glow: rgba(200,160,80,0.12);
+  --action-bg: #22222a; --action-hover: #2c2c36; --action-active: #343440;
+  --scene-bg: #24242e; --scene-hover: #32323e;
+  --danger-bg: #301a1a; --danger-hover: #402222;
   --link: #c8a868; --link-hover: #e0c080;
-  --tag-km: #5a9a9a; --tag-card: #c8a050;
-  --status-stable: #6aaa6a; --status-unstable: #c8a050; --status-stuck: #d07070;
-  --tab-active-bg: #282830; --tab-bg: #1c1c20;
+  --tag-km: #4a8a8a; --tag-card: #c8a050;
+  --status-stable: #5a9a5a; --status-unstable: #c8a050; --status-stuck: #c06060;
+  --tab-active-bg: #1e1e24; --tab-bg: #18181c;
+  --font-serif: 'Noto Serif SC', 'SimSun', 'STSong', serif;
+  --font-sans: 'Segoe UI', 'Microsoft YaHei', 'PingFang SC', sans-serif;
+  --radius: 6px;
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
 body {
-  background: var(--bg); color: var(--text);
-  font-family: "Segoe UI", "Microsoft YaHei", sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-sans);
   height: 100vh; display: flex; justify-content: center;
-  align-items: stretch; padding: 12px;
+  align-items: stretch; padding: 16px;
   overflow: hidden;
 }
 
 #app {
   width: 92vw; max-width: 1400px;
   display: flex; flex-direction: column;
-  border: 2px solid var(--border); border-radius: 4px;
+  border: 1px solid var(--border); border-radius: var(--radius);
   overflow: hidden;
-  box-shadow: 0 0 60px rgba(0,0,0,0.4);
+  box-shadow: 0 0 80px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.02);
+  background: var(--panel-bg);
 }
 
 /* ═══ 顶栏 Tab ═══ */
 #tab-bar {
   display: flex; background: var(--sidebar-bg);
-  border-bottom: 2px solid var(--border);
+  border-bottom: 1px solid var(--border);
 }
 .tab-btn {
-  padding: 12px 24px; border: none; background: var(--tab-bg);
+  padding: 13px 28px; border: none; background: transparent;
   color: var(--text-dim); font-size: 14px; cursor: pointer;
-  font-family: inherit; border-right: 1px solid var(--border);
-  transition: all 0.15s; letter-spacing: 1px;
+  font-family: var(--font-serif); letter-spacing: 2px;
+  position: relative; transition: color 0.25s;
 }
-.tab-btn:hover { color: var(--text-bright); background: var(--action-bg); }
-.tab-btn.active { background: var(--panel-bg); color: var(--accent);
-  border-bottom: 2px solid var(--accent); margin-bottom: -2px; }
+.tab-btn::after {
+  content: ''; position: absolute; bottom: 0; left: 50%; transform: translateX(-50%);
+  width: 0; height: 2px; background: var(--accent);
+  transition: width 0.25s ease;
+}
+.tab-btn:hover { color: var(--text-bright); }
+.tab-btn.active { color: var(--accent); }
+.tab-btn.active::after { width: 60%; }
 
 /* ═══ 主体 ═══ */
 #body-row { display: flex; flex-direction: column; flex: 1; min-height: 0; }
 
 /* ═══ 课程选择栏 ═══ */
-#course-bar { padding: 10px 24px; background: var(--sidebar-bg);
-  border-bottom: 2px solid var(--border); display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
-.course-bar-label { font-size: 13px; color: var(--text-dim); }
+#course-bar { padding: 10px 28px; background: var(--sidebar-bg);
+  border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+.course-bar-label { font-size: 12px; color: var(--text-dim); font-family: var(--font-serif); letter-spacing: 1px; }
 #cbar-course-name { font-size: 14px; color: var(--accent); cursor: pointer;
-  text-decoration: underline; font-weight: 500; }
+  font-weight: 600; transition: color 0.2s; }
 #cbar-course-name:hover { color: var(--link-hover); }
 #cbar-tags { font-size: 11px; }
-.tag { display: inline-block; font-size: 9px; padding: 1px 5px; border-radius: 2px; margin-left: 3px; }
-.tag-km { background: #2a4a4a; color: #7acccc; }
-.tag-card { background: #3a3020; color: #c8a050; }
+.tag { display: inline-block; font-size: 9px; padding: 2px 6px; border-radius: 3px; margin-left: 4px;
+  letter-spacing: 0.5px; }
+.tag-km { background: #1e3a3a; color: #6ab8b8; }
+.tag-card { background: #2e2418; color: #c8a050; }
 
 /* ═══ 主内容区 ═══ */
-#main { flex: 1; display: flex; flex-direction: column; background: var(--panel-bg); overflow: hidden; min-height: 0; }
+#main { flex: 1; display: flex; flex-direction: column; background: var(--panel-bg); overflow: hidden; min-height: 0;
+  background-image: radial-gradient(ellipse at 50% 0%, rgba(200,160,80,0.03) 0%, transparent 70%); }
 
 /* 视图容器 */
 .view { display: none; flex-direction: column; flex: 1; overflow-y: auto; min-height: 0; }
-.view.active { display: flex; }
+.view.active { display: flex; animation: viewFadeIn 0.3s ease; }
 #view-knowledge { overflow: hidden; }
+
+@keyframes viewFadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
 
 
 /* ── 闪卡视图 ── */
-#fc-setup, #fc-review, #fc-done { padding: 30px; }
-#fc-setup h3, #fc-review h3, #fc-done h3 { color: var(--accent); margin-bottom: 16px; }
+#fc-setup, #fc-review, #fc-done { padding: 36px; max-width: 700px; margin: 0 auto; width: 100%; }
+#fc-setup h3, #fc-review h3, #fc-done h3 {
+  font-family: var(--font-serif); color: var(--accent); margin-bottom: 20px;
+  font-size: 20px; letter-spacing: 2px; font-weight: 600;
+}
 .fc-mode-btn { padding: 10px 20px; margin: 4px; border: 1px solid var(--border);
-  border-radius: 3px; background: var(--action-bg); color: var(--text);
-  font-size: 14px; cursor: pointer; font-family: inherit; }
-.fc-mode-btn:hover { background: var(--action-hover); }
-.fc-mode-btn.active { border-color: var(--accent); background: var(--action-active); }
-#fc-card { background: var(--action-bg); border: 1px solid var(--border);
-  border-radius: 4px; padding: 24px; margin: 16px 0; }
-#fc-question { font-size: 16px; color: var(--text-bright); line-height: 1.7; }
-#fc-answer { margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--border);
-  font-size: 14px; color: #b0d0b0; display: none; }
-#fc-explanation { font-size: 13px; color: var(--text-dim); margin-top: 8px; display: none; }
-.fc-btn { padding: 10px 22px; margin: 4px; border: none; border-radius: 3px;
-  font-size: 14px; cursor: pointer; font-family: inherit; color: #fff; }
-.fc-btn-1 { background: #6a3030; } .fc-btn-1:hover { background: #8a4040; }
-.fc-btn-2 { background: #5a4a20; } .fc-btn-2:hover { background: #7a6a30; }
-.fc-btn-3 { background: #2a4a2a; } .fc-btn-3:hover { background: #3a6a3a; }
-.fc-btn-show { background: #2a3a4a; } .fc-btn-show:hover { background: #3a4a6a; }
-.fc-progress { font-size: 13px; color: var(--text-dim); margin: 8px 0; }
-.fc-bar { height: 6px; background: var(--bg); border-radius: 3px; margin: 8px 0; }
-.fc-bar-fill { height: 100%; border-radius: 3px; transition: width 0.3s; }
+  border-radius: var(--radius); background: var(--action-bg); color: var(--text);
+  font-size: 13px; cursor: pointer; font-family: var(--font-sans);
+  transition: all 0.2s; }
+.fc-mode-btn:hover { background: var(--action-hover); border-color: var(--accent-dim); }
+.fc-mode-btn.active { border-color: var(--accent); background: var(--action-active);
+  box-shadow: 0 0 12px var(--accent-glow); }
+#fc-card { background: linear-gradient(135deg, #24242c 0%, #1e1e26 100%);
+  border: 1px solid var(--border); border-radius: var(--radius); padding: 32px;
+  margin: 20px 0; box-shadow: 0 4px 24px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.02); }
+#fc-question { font-size: 17px; color: var(--text-bright); line-height: 1.8;
+  font-family: var(--font-serif); letter-spacing: 0.5px; }
+#fc-answer { margin-top: 18px; padding-top: 18px; border-top: 1px solid var(--accent-dim);
+  font-size: 15px; color: #8ab88a; display: none; line-height: 1.7; }
+#fc-explanation { font-size: 13px; color: var(--text-dim); margin-top: 12px; display: none;
+  line-height: 1.7; padding: 12px; background: rgba(0,0,0,0.2); border-radius: var(--radius); }
+.fc-btn { padding: 10px 24px; margin: 4px; border: none; border-radius: var(--radius);
+  font-size: 13px; cursor: pointer; font-family: var(--font-sans); color: #fff;
+  transition: all 0.2s; }
+.fc-btn-1 { background: #5a2828; } .fc-btn-1:hover { background: #7a3838; transform: translateY(-1px); }
+.fc-btn-2 { background: #4a3a18; } .fc-btn-2:hover { background: #6a5028; transform: translateY(-1px); }
+.fc-btn-3 { background: #1e3e1e; } .fc-btn-3:hover { background: #2a5a2a; transform: translateY(-1px); }
+.fc-btn-show { background: #1e2e3e; } .fc-btn-show:hover { background: #2a4258; transform: translateY(-1px); }
+.fc-progress { font-size: 12px; color: var(--text-dim); margin: 10px 0; letter-spacing: 0.5px; }
+.fc-bar { height: 4px; background: var(--bg); border-radius: 2px; margin: 10px 0; overflow: hidden; }
+.fc-bar-fill { height: 100%; border-radius: 2px; transition: width 0.4s ease;
+  background: linear-gradient(90deg, var(--accent-dim), var(--accent)); }
 
 /* ── 知识地图视图 ── */
-#km-content { display: flex; flex-direction: column; flex: 1; padding: 16px 24px; overflow: hidden; }
-#km-content h3 { color: var(--accent); margin-bottom: 8px; flex-shrink: 0; }
-.km-node { padding: 10px 14px; margin: 4px 0; border: 1px solid var(--border);
-  border-radius: 3px; background: var(--action-bg); cursor: pointer;
-  display: flex; justify-content: space-between; align-items: center; }
-.km-node:hover { background: var(--action-hover); }
-.km-node .status-dot { width: 10px; height: 10px; border-radius: 50%; margin-right: 10px; flex-shrink: 0; }
+#km-content { display: flex; flex-direction: column; flex: 1; padding: 20px 28px; overflow: hidden; }
+#km-content h3 { font-family: var(--font-serif); color: var(--accent); margin-bottom: 10px;
+  flex-shrink: 0; font-size: 18px; letter-spacing: 2px; }
+.km-node { padding: 10px 16px; margin: 4px 0; border: 1px solid var(--border);
+  border-radius: var(--radius); background: var(--action-bg); cursor: pointer;
+  display: flex; justify-content: space-between; align-items: center;
+  transition: background 0.15s, border-color 0.15s; }
+.km-node:hover { background: var(--action-hover); border-color: var(--accent-dim); }
+.km-node .status-dot { width: 10px; height: 10px; border-radius: 50%; margin-right: 12px; flex-shrink: 0; }
 .km-node .node-name { flex: 1; font-size: 13px; }
 .km-node .node-impact { font-size: 11px; color: var(--text-dim); }
 .status-stable { background: var(--status-stable); }
@@ -114,85 +143,207 @@ body {
 .status-unlearned { background: #555; }
 
 /* km 顶栏：统计 + 图例合并为一行 */
-#km-topbar { display: flex; align-items: center; gap: 16px; margin-bottom: 10px; flex-shrink: 0; flex-wrap: wrap; }
+#km-topbar { display: flex; align-items: center; gap: 16px; margin-bottom: 12px; flex-shrink: 0; flex-wrap: wrap; }
 #km-stats { display: flex; gap: 8px; }
-.km-stat { padding: 4px 10px; border: 1px solid var(--border); border-radius: 3px;
+.km-stat { padding: 6px 14px; border: 1px solid var(--border); border-radius: var(--radius);
   background: var(--action-bg); text-align: center; font-size: 12px; }
-.km-stat .num { font-size: 18px; font-weight: bold; }
-.km-stat .lbl { font-size: 10px; color: var(--text-dim); }
+.km-stat .num { font-size: 20px; font-weight: 700; font-family: var(--font-serif); }
+.km-stat .lbl { font-size: 10px; color: var(--text-dim); letter-spacing: 1px; }
 
 /* ── 知识地图 Canvas ── */
-#km-canvas-wrap { margin: 0; border: 1px solid var(--border); border-radius: 4px;
-  background: var(--bg); overflow: hidden; position: relative;
+#km-canvas-wrap { margin: 0; border: 1px solid var(--border); border-radius: var(--radius);
+  background: #121216; overflow: hidden; position: relative;
   flex: 1; min-height: 350px; cursor: grab; }
 #km-canvas-wrap.grabbing { cursor: grabbing; }
 #km-canvas { display: block; }
 #km-detail { display: none; position: absolute; z-index: 10;
-  padding: 14px 18px; border: 1px solid var(--accent-dim); border-radius: 6px;
-  background: #2a2a32; color: var(--text); font-size: 13px;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.5); max-width: 320px;
-  pointer-events: auto; }
-#km-detail h4 { color: var(--accent); margin: 0 0 6px; font-size: 14px; }
-#km-detail .detail-row { margin: 3px 0; }
+  padding: 16px 22px; border: 1px solid var(--accent-dim); border-radius: var(--radius);
+  background: rgba(30,30,38,0.96); color: var(--text); font-size: 13px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.6), 0 0 0 1px rgba(200,160,80,0.1); max-width: 440px;
+  pointer-events: auto; backdrop-filter: blur(8px); }
+#km-detail h4 { color: var(--accent); margin: 0 0 8px; font-size: 15px;
+  font-family: var(--font-serif); letter-spacing: 1px; }
+#km-detail .detail-row { margin: 4px 0; line-height: 1.6; }
 #km-detail .detail-row .dl { color: var(--text-dim); font-size: 11px; }
-#km-legend { display: flex; gap: 14px; font-size: 12px; color: var(--text-dim); flex-shrink: 0; }
-#km-legend span { display: flex; align-items: center; gap: 4px; }
-#km-legend .dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
-.km-pan-hint { position: absolute; right: 8px; bottom: 6px;
-  font-size: 10px; color: var(--text-dim); opacity: 0.6; pointer-events: none; }
+#km-legend { display: flex; gap: 16px; font-size: 12px; color: var(--text-dim); flex-shrink: 0; }
+#km-legend span { display: flex; align-items: center; gap: 5px; }
+#km-legend .dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.km-pan-hint { position: absolute; right: 10px; bottom: 8px;
+  font-size: 10px; color: var(--text-dim); opacity: 0.5; pointer-events: none; }
+
+/* ── 知识地图工具栏 ── */
+#km-toolbar { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; flex-shrink: 0; flex-wrap: wrap; }
+#km-search { padding: 6px 12px; border: 1px solid var(--border); border-radius: var(--radius);
+  background: var(--bg); color: var(--text); font-size: 12px; font-family: var(--font-sans);
+  width: 180px; outline: none; transition: border-color 0.2s, box-shadow 0.2s; }
+#km-search:focus { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-glow); }
+#km-search-results { position: absolute; z-index: 20; background: var(--panel-bg);
+  border: 1px solid var(--accent-dim); border-radius: var(--radius); max-height: 200px;
+  overflow-y: auto; display: none; font-size: 12px; min-width: 200px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.5); }
+#km-search-results .sr-item { padding: 7px 12px; cursor: pointer; border-bottom: 1px solid var(--border);
+  transition: background 0.12s; }
+#km-search-results .sr-item:hover { background: var(--action-hover); }
+#km-search-results .sr-item .sr-match { color: var(--accent); font-weight: bold; }
+.km-tool-btn { padding: 5px 12px; border: 1px solid var(--border); border-radius: var(--radius);
+  background: var(--action-bg); color: var(--text); font-size: 11px; cursor: pointer;
+  font-family: var(--font-sans); transition: all 0.2s; white-space: nowrap; }
+.km-tool-btn:hover { background: var(--action-hover); border-color: var(--accent-dim); }
+.km-tool-btn.active { border-color: var(--accent); background: var(--action-active);
+  box-shadow: 0 0 10px var(--accent-glow); }
+
+/* ── 课次信息条 ── */
+#lesson-info-bar { display: flex; align-items: center; gap: 14px; padding: 4px 0 8px;
+  font-size: 12px; color: var(--text-dim); flex-shrink: 0; font-family: var(--font-serif); }
+#lesson-info-bar .li-num { font-size: 16px; font-weight: 700; color: var(--accent); }
+#lesson-info-bar .li-sep { color: var(--border); }
 
 /* ── 推荐 & 节点列表（可折叠） ── */
-.km-section { flex-shrink: 0; margin-top: 10px; border: 1px solid var(--border); border-radius: 4px; overflow: hidden; }
+.km-section { flex-shrink: 0; margin-top: 10px; border: 1px solid var(--border);
+  border-radius: var(--radius); overflow: hidden; }
 .km-section-header { display: flex; align-items: center; justify-content: space-between;
-  padding: 8px 14px; background: var(--action-bg); cursor: pointer; user-select: none;
-  font-size: 13px; color: var(--text); }
+  padding: 9px 16px; background: var(--action-bg); cursor: pointer; user-select: none;
+  font-size: 13px; color: var(--text); transition: background 0.15s;
+  font-family: var(--font-serif); letter-spacing: 1px; }
 .km-section-header:hover { background: var(--action-hover); }
 .km-section-header .arrow { transition: transform 0.2s; font-size: 10px; color: var(--text-dim); }
 .km-section-header .arrow.open { transform: rotate(90deg); }
-.km-section-body { display: none; padding: 10px 14px; background: var(--bg);
+.km-section-body { display: none; padding: 12px 16px; background: var(--bg);
   max-height: 200px; overflow-y: auto; border-top: 1px solid var(--border); }
 .km-section-body.open { display: block; }
 
-.km-rec-item { padding: 8px 12px; margin: 3px 0; border: 1px solid var(--border);
-  border-radius: 3px; background: var(--action-bg); cursor: pointer;
-  display: flex; align-items: center; gap: 10px; }
-.km-rec-item:hover { background: var(--action-hover); }
+.km-rec-item { padding: 9px 14px; margin: 3px 0; border: 1px solid var(--border);
+  border-radius: var(--radius); background: var(--action-bg); cursor: pointer;
+  display: flex; align-items: center; gap: 10px; transition: all 0.15s; }
+.km-rec-item:hover { background: var(--action-hover); border-color: var(--accent-dim); }
 .km-rec-item .rec-icon { font-weight: bold; font-size: 14px; flex-shrink: 0; }
 .km-rec-item .rec-name { flex: 1; font-size: 13px; }
 .km-rec-item .rec-impact { font-size: 11px; color: var(--text-dim); }
 
 /* ── 进度视图 ── */
-#pg-content { padding: 24px 32px; }
-#pg-content h3 { color: var(--accent); margin: 16px 0 8px; }
+#pg-content { padding: 28px 36px; }
+#pg-content h3 { font-family: var(--font-serif); color: var(--accent); margin: 20px 0 10px;
+  font-size: 17px; letter-spacing: 2px; }
 #pg-content h3:first-child { margin-top: 0; }
-#pg-content pre { background: var(--bg); padding: 14px; border-radius: 3px;
-  font-size: 12px; line-height: 1.6; overflow-x: auto; white-space: pre-wrap;
+#pg-content pre { background: var(--bg); padding: 16px; border-radius: var(--radius);
+  font-size: 12px; line-height: 1.7; overflow-x: auto; white-space: pre-wrap;
   color: var(--text); border: 1px solid var(--border); max-height: 300px; overflow-y: auto; }
 
 /* ── 弹窗 ── */
 .modal-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-  background: rgba(0,0,0,0.7); z-index: 100; justify-content: center; align-items: center; }
+  background: rgba(0,0,0,0.7); z-index: 100; justify-content: center; align-items: center;
+  backdrop-filter: blur(4px); }
 .modal-overlay.active { display: flex; }
-.modal { background: var(--panel-bg); border: 2px solid var(--border); border-radius: 4px;
-  padding: 24px; width: 400px; max-width: 90vw; max-height: 80vh; overflow-y: auto; }
-.modal h3 { color: var(--accent); font-size: 17px; margin-bottom: 14px;
-  padding-bottom: 8px; border-bottom: 1px solid var(--border); }
-.modal-item { display: block; width: 100%; text-align: left; padding: 9px 12px;
-  margin-bottom: 4px; border: 1px solid transparent; border-radius: 3px;
-  background: var(--action-bg); color: var(--text); font-size: 13px;
-  cursor: pointer; font-family: inherit; transition: all 0.15s; }
+.modal { background: var(--panel-bg); border: 1px solid var(--accent-dim); border-radius: var(--radius);
+  padding: 28px; width: 420px; max-width: 90vw; max-height: 80vh; overflow-y: auto;
+  box-shadow: 0 16px 48px rgba(0,0,0,0.6), 0 0 0 1px rgba(200,160,80,0.08); }
+.modal h3 { color: var(--accent); font-size: 18px; margin-bottom: 16px;
+  padding-bottom: 10px; border-bottom: 1px solid var(--border);
+  font-family: var(--font-serif); letter-spacing: 2px; }
+.modal-item { display: block; width: 100%; text-align: left; padding: 10px 14px;
+  margin-bottom: 4px; border: 1px solid transparent; border-radius: var(--radius);
+  background: var(--action-bg); color: var(--text); font-size: 14px;
+  cursor: pointer; font-family: var(--font-sans); transition: all 0.15s; }
 .modal-item:hover { background: var(--action-hover); border-color: var(--accent-dim); }
-.modal-item.selected { border-color: var(--accent); background: var(--action-active); }
-.modal-close { display: block; width: 100%; margin-top: 10px; padding: 7px;
-  border: 1px solid var(--border); border-radius: 3px; background: transparent;
-  color: var(--text-dim); font-size: 12px; cursor: pointer; font-family: inherit; text-align: center; }
-.modal-close:hover { color: var(--text-bright); }
+.modal-item.selected { border-color: var(--accent); background: var(--action-active);
+  box-shadow: 0 0 8px var(--accent-glow); }
+.modal-close { display: block; width: 100%; margin-top: 12px; padding: 8px;
+  border: 1px solid var(--border); border-radius: var(--radius); background: transparent;
+  color: var(--text-dim); font-size: 13px; cursor: pointer; font-family: var(--font-sans);
+  text-align: center; transition: all 0.2s; }
+.modal-close:hover { color: var(--text-bright); border-color: var(--text-dim); }
 
-/* ── 动画 ── */
+/* ── 统计视图 ── */
+#stats-content { padding: 28px 36px; overflow-y: auto; flex: 1; }
+#stats-content h3 { font-family: var(--font-serif); color: var(--accent); margin-bottom: 10px;
+  font-size: 17px; letter-spacing: 2px; }
+#st-streak-wrap { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
+.streak-badge { display: inline-flex; align-items: baseline; gap: 6px; padding: 10px 24px;
+  border-radius: var(--radius); background: #1e2818; border: 1px solid var(--accent-dim); }
+.streak-num { font-size: 36px; font-weight: 700; color: var(--accent); line-height: 1;
+  font-family: var(--font-serif); }
+.streak-label { font-size: 13px; color: var(--text-dim); letter-spacing: 1px; }
+
+/* 热力图 */
+#st-calendar-wrap table { border-collapse: separate; border-spacing: 3px; margin: 0 auto; }
+.cal-cell { width: 14px; height: 14px; border-radius: 3px; }
+.cal-day-label { font-size: 10px; color: var(--text-dim); width: 28px; text-align: right; padding-right: 6px; }
+.cal-month-row td { font-size: 10px; color: var(--text-dim); text-align: center; padding-bottom: 4px; }
+.cal-l0 { background: #1c1c24; }
+.cal-l1 { background: #2e3418; }
+.cal-l2 { background: #4a5018; }
+.cal-l3 { background: #7a6818; }
+.cal-l4 { background: var(--accent); }
+
+/* 环形图 */
+#st-donut-wrap svg { display: block; margin: 0 auto; }
+.donut-legend { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; justify-content: center; }
+.donut-item { font-size: 12px; display: flex; align-items: center; gap: 5px; }
+.donut-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+
+/* 最难概念列表 */
+#st-hardest-wrap h4 { color: var(--text-bright); font-size: 14px; margin: 0 0 8px;
+  font-family: var(--font-serif); letter-spacing: 1px; }
+.hard-item { display: flex; align-items: center; gap: 12px; padding: 9px 14px;
+  margin-bottom: 6px; border: 1px solid var(--border); border-radius: var(--radius);
+  background: var(--action-bg); font-size: 13px; transition: border-color 0.15s; }
+.hard-item:hover { border-color: var(--accent-dim); }
+.hard-rank { font-weight: 700; font-size: 18px; color: var(--accent); min-width: 24px;
+  text-align: center; font-family: var(--font-serif); }
+.hard-name { flex: 1; color: var(--text); }
+.hard-meta { font-size: 11px; color: var(--text-dim); white-space: nowrap; }
+.hard-status { font-size: 10px; padding: 3px 8px; border-radius: 3px; font-weight: 600;
+  letter-spacing: 0.5px; }
+.hard-status.stuck { background: #3a1818; color: #e06060; }
+.hard-status.unstable { background: #2e2418; color: #c8a050; }
+
+/* ── 滚动条 ── */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #2a2a34; border-radius: 2px; }
+::-webkit-scrollbar-thumb:hover { background: #3a3a44; }
+
+/* ── 全局动画 ── */
 @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
-#loc-content .action-btn { animation: fadeIn 0.15s ease forwards; }
-::-webkit-scrollbar { width: 5px; } ::-webkit-scrollbar-track { background: var(--bg); }
-::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+/* ── Fantasy Info Panel ── */
+#km-detail {
+  background: linear-gradient(180deg, #2a2418 0%, #1e1a12 100%);
+  border: 2px solid #5a4828;
+  border-radius: 6px;
+  box-shadow: 0 8px 36px rgba(0,0,0,0.7), 0 0 20px rgba(200,160,80,0.1), inset 0 1px 0 rgba(255,255,255,0.03);
+  color: #d0c0a0;
+  font-family: var(--font-serif);
+  padding: 18px 22px;
+  animation: scrollUnfurl 0.28s ease-out;
+  transform-origin: top center;
+  position: relative;
+}
+#km-detail::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(200,160,80,0.4), transparent);
+}
+#km-detail::after {
+  content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(200,160,80,0.2), transparent);
+}
+#km-detail h4 { color: #e0c878; margin: 0 0 10px; font-size: 16px; letter-spacing: 1.5px; }
+#km-detail .detail-row { margin: 4px 0; line-height: 1.6; font-size: 12px; }
+#km-detail .detail-row .dl { color: #8a7a5a; font-size: 11px; margin-right: 6px; }
+.km-panel-actions { display: flex; gap: 8px; margin-top: 12px; padding-top: 10px; border-top: 1px solid rgba(200,160,80,0.15); }
+.km-panel-btn { flex: 1; padding: 6px 12px; border: 1px solid #5a4828; border-radius: 4px;
+  background: rgba(200,160,80,0.08); color: #c8a868; font-size: 11px; cursor: pointer;
+  font-family: var(--font-serif); letter-spacing: 1px; transition: all 0.2s; }
+.km-panel-btn:hover { background: rgba(200,160,80,0.18); border-color: #8a7040; color: #e0c878; }
+
+@keyframes scrollUnfurl {
+  from { transform: scaleY(0.3); opacity: 0; }
+  to { transform: scaleY(1); opacity: 1; }
+}
+@keyframes xpFloatUp {
+  from { transform: translateY(0); opacity: 1; }
+  to { transform: translateY(-36px); opacity: 0; }
+}
 
 </style>
 </head>
@@ -201,9 +352,10 @@ body {
 <div id="app">
   <!-- Tab 栏 -->
   <div id="tab-bar">
-    <button class="tab-btn active" data-tab="knowledge" onclick="switchTab('knowledge')">📊 知识地图</button>
-    <button class="tab-btn" data-tab="flashcard" onclick="switchTab('flashcard')">🃏 闪卡</button>
-    <button class="tab-btn" data-tab="progress" onclick="switchTab('progress')">📋 进度</button>
+    <button class="tab-btn active" data-tab="knowledge" onclick="switchTab('knowledge')">知 识 地 图</button>
+    <button class="tab-btn" data-tab="flashcard" onclick="switchTab('flashcard')">闪 卡</button>
+    <button class="tab-btn" data-tab="progress" onclick="switchTab('progress')">进 度</button>
+    <button class="tab-btn" data-tab="stats" onclick="switchTab('stats')">统 计</button>
   </div>
 
   <!-- 主体 -->
@@ -262,16 +414,37 @@ body {
       <!-- ═══ 知识地图视图 ═══ -->
       <div class="view active" id="view-knowledge">
         <div id="km-content">
+          <!-- 课次信息条 -->
+          <div id="lesson-info-bar">
+            <span id="li-lesson"></span>
+            <span class="li-sep" id="li-sep1">|</span>
+            <span id="li-time"></span>
+            <span class="li-sep" id="li-sep2">|</span>
+            <span id="li-streak"></span>
+          </div>
           <!-- 顶栏：统计 + 图例 -->
           <div id="km-topbar">
             <div id="km-stats"></div>
+            <div id="km-xp-wrap" style="display:flex;align-items:center;gap:6px;margin-left:12px;">
+              <span style="font-size:10px;color:#c8a040;font-family:var(--font-serif);white-space:nowrap;">Lv.<span id="km-xp-level">1</span></span>
+              <div style="width:90px;height:6px;background:var(--bg);border-radius:3px;overflow:hidden;border:1px solid rgba(200,160,80,0.3);">
+                <div id="km-xp-bar" style="width:0%;height:100%;background:linear-gradient(90deg,#5a8a28,#90d840);border-radius:3px;transition:width 0.5s ease;"></div>
+              </div>
+            </div>
             <div id="km-legend">
               <span><span class="dot" style="background:var(--status-stable);"></span>稳固</span>
               <span><span class="dot" style="background:var(--status-unstable);"></span>不稳</span>
               <span><span class="dot" style="background:var(--status-stuck);"></span>卡住</span>
               <span><span class="dot" style="background:#555;"></span>未学</span>
             </div>
-            <span style="font-size:11px;color:var(--text-dim);margin-left:auto;">右键拖动 · 点击节点</span>
+          </div>
+          <!-- 搜索 + 工具栏 -->
+          <div id="km-toolbar">
+            <input id="km-search" type="text" placeholder="搜索节点..." oninput="onSearchNodes()" onfocus="onSearchNodes()">
+            <div id="km-search-results"></div>
+            <button class="km-tool-btn" onclick="resetKmView()" title="重置缩放和平移">🔍 概览</button>
+            <button class="km-tool-btn" id="km-btn-highlight" onclick="toggleHighlightMode()">🔗 高亮依赖</button>
+            <span style="font-size:11px;color:var(--text-dim);margin-left:auto;">右键拖动 · 滚轮缩放 · 双击聚焦 · 点击节点</span>
           </div>
           <p style="color:var(--text-dim);margin:0 0 6px;flex-shrink:0;font-size:13px;">
             课程：<span id="km-course-name" style="color:var(--accent);cursor:pointer;text-decoration:underline;" onclick="showCourseModal()">点击选择</span>
@@ -316,6 +489,31 @@ body {
         </div>
       </div>
 
+      <!-- ═══ 统计视图 ═══ -->
+      <div class="view" id="view-stats">
+        <div id="stats-content">
+          <p style="color:var(--text-dim);margin-bottom:4px;">
+            课程：<span id="st-course-name" style="color:var(--accent);cursor:pointer;text-decoration:underline;" onclick="showCourseModal()">点击选择</span>
+          </p>
+          <!-- 课次信息 -->
+          <div id="st-lesson-info" style="display:flex;align-items:center;gap:12px;margin-bottom:12px;font-size:13px;color:var(--text-dim);"></div>
+          <div id="st-data">
+            <!-- 连续天数 -->
+            <div id="st-streak-wrap" style="margin-bottom:16px;"></div>
+            <!-- 热力图 -->
+            <div id="st-calendar-wrap" style="margin-bottom:16px;"></div>
+            <!-- 环形图 + 最难概念 -->
+            <div id="st-charts-row" style="display:flex;gap:24px;">
+              <div id="st-donut-wrap" style="flex:0 0 200px;"></div>
+              <div id="st-hardest-wrap" style="flex:1;"></div>
+            </div>
+          </div>
+          <div id="st-empty" style="display:none;color:var(--text-dim);padding:40px;text-align:center;">
+            该课程还没有统计数据。<br>上一节课后，这里会出现学习记录。
+          </div>
+        </div>
+      </div>
+
     </div>
   </div>
 </div>
@@ -334,6 +532,10 @@ let state = {
   course:null, courseName:null, activeTab:"knowledge",
 };
 let courses = {};
+let _initDone = false;
+let _initError = null;
+// 页面加载即显示状态（不等 init 完成）
+(function(){ var el=document.getElementById("cbar-course-name"); if(el) el.textContent="\u{1F504} 连接中..."; })();
 let fcSession = null;       // 闪卡会话
 let fcMode = "all";         // 闪卡模式
 let fcWaitingRating = false;
@@ -342,11 +544,18 @@ let fcWaitingRating = false;
 //  API
 // ═══════════════════════════════════════════════════════════
 
-async function api(path, method="GET", body=null) {
+async function api(path, method="GET", body=null, timeoutMs=8000) {
   const opts = {method};
   if (body) { opts.headers = {"Content-Type":"application/json"}; opts.body = JSON.stringify(body); }
-  const res = await fetch(path, opts);
-  return res.json();
+  const ctrl = new AbortController();
+  opts.signal = ctrl.signal;
+  const timer = setTimeout(() => ctrl.abort(), timeoutMs);
+  try {
+    const res = await fetch(path, opts);
+    return res.json();
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -362,6 +571,7 @@ function switchTab(tab) {
 
   if (tab === "knowledge") renderKnowledgeMap();
   else if (tab === "progress") renderProgress();
+  else if (tab === "stats") renderStats();
   // flashcard 保持自己的状态，不重新渲染
 }
 
@@ -374,6 +584,8 @@ function closeModal() { document.getElementById("modal-overlay").classList.remov
 document.getElementById("modal-overlay").addEventListener("click", function(e) { if (e.target===this) closeModal(); });
 
 function showCourseModal() {
+  if (!_initDone) { showModal("<h3>选择课程</h3><p style='color:var(--text-dim);'>正在连接服务器...</p><button class='modal-close' onclick='closeModal()'>返回</button>"); return; }
+  if (_initError) { showModal("<h3>选择课程</h3><p style='color:#d08080;'>"+_initError+"</p><button class='modal-close' onclick='closeModal()'>返回</button>"); return; }
   const items = Object.values(courses);
   if (items.length===0) { showModal("<h3>选择课程</h3><p style='color:var(--text-dim);'>courses/ 下还没有课程。</p><button class='modal-close' onclick='closeModal()'>返回</button>"); return; }
   let html = "<h3>选择课程</h3>";
@@ -394,11 +606,15 @@ function selectCourse(cid) {
   if (state.activeTab==="flashcard") updateFcCourseLabel();
   else if (state.activeTab==="knowledge") renderKnowledgeMap();
   else if (state.activeTab==="progress") renderProgress();
+  else if (state.activeTab==="stats") renderStats();
 }
 
 function updateCourseBar() {
   const c = courses[state.course];
-  document.getElementById("cbar-course-name").textContent = state.courseName||"点击选择";
+  const nameEl = document.getElementById("cbar-course-name");
+  if (!_initDone) { nameEl.textContent = "\u{1F504} 连接中..."; nameEl.style.color = "#c8a040"; }
+  else if (_initError) { nameEl.textContent = "⚠ " + _initError; nameEl.style.color = "#e06060"; }
+  else { nameEl.textContent = state.courseName||"点击选择"; nameEl.style.color = ""; }
   let tags = "";
   if (c) {
     if (c.has_km) tags += '<span class="tag tag-km">知识地图</span>';
@@ -497,11 +713,75 @@ function resetFlashcard() {
 //  知识地图
 // ═══════════════════════════════════════════════════════════
 
+
 let kmNodePositions = [];
 let kmPanX = 0, kmPanY = 0;
-let kmRedraw = null; // 重绘函数引用
+let kmZoom = 1;
+let kmHighlightMode = false;
+let kmRedraw = null;
+let kmNodeMap = {};
+let kmSelectedNode = null;
 
+// ── Fantasy assets ──
+let kmParchmentImg = null;
+let kmAdventurerImg = null;
+let kmMarbleImg = null;
+let kmCompassImg = null;
+let kmMarkerImg = null;
+let kmAssetsReady = false;
+
+// ── XP system ──
+let kmXP = 0;
+let kmLevel = 1;
+const XP_PER_LEVEL = 100;
+
+// ── Animation state ──
+let kmAnimId = null;
+let kmParticles = [];
+let kmWeatherParticles = [];
+let kmFloatingTexts = [];
+let kmFootprints = [];
+let kmClock = 0;
+
+// ── Character state ──
+let kmChar = {
+  nodeId: null, x: 0, y: 0,
+  targetX: 0, targetY: 0,
+  frame: 0, pose: 'idle',
+  moving: false, moveStart: 0, moveDuration: 700,
+  startX: 0, startY: 0,
+};
+
+// ── Preload fantasy assets ──
+(function preloadFantasyAssets() {
+  kmParchmentImg = new Image();
+  kmParchmentImg.src = '/assets/羊皮纸背景.png';
+  kmAdventurerImg = new Image();
+  kmAdventurerImg.src = '/assets/冒险者图.png';
+  let loaded = 0, total = 5;
+  function onLoad() { loaded++; if (loaded >= total) kmAssetsReady = true; }
+  function onErr() { loaded++; if (loaded >= total) kmAssetsReady = true; }
+  kmParchmentImg.onload = onLoad;
+  kmParchmentImg.onerror = function() { kmParchmentImg = null; onErr(); };
+  kmAdventurerImg.onload = onLoad;
+  kmAdventurerImg.onerror = function() { kmAdventurerImg = null; onErr(); };
+  kmMarbleImg = new Image();
+  kmMarbleImg.src = '/assets/大理石背景.png';
+  kmMarbleImg.onload = function() { document.body.style.backgroundImage = "url('/assets/大理石背景.png')"; document.body.style.backgroundSize = "cover"; document.body.style.backgroundPosition = "center"; onLoad(); };
+  kmMarbleImg.onerror = function() { kmMarbleImg = null; onErr(); };
+  kmCompassImg = new Image();
+  kmCompassImg.src = '/assets/罗盘玫瑰.png';
+  kmCompassImg.onload = onLoad;
+  kmCompassImg.onerror = function() { kmCompassImg = null; onErr(); };
+  kmMarkerImg = new Image();
+  kmMarkerImg.src = '/assets/地图标记图标.png';
+  kmMarkerImg.onload = onLoad;
+  kmMarkerImg.onerror = function() { kmMarkerImg = null; onErr(); };
+})();
+
+// ═══ renderKnowledgeMap ═══
 async function renderKnowledgeMap() {
+  loadXPState();
   document.getElementById("km-course-name").textContent = state.courseName||"点击选择";
   document.getElementById("km-stats").innerHTML="";
   document.getElementById("km-recommend").innerHTML="";
@@ -511,8 +791,27 @@ async function renderKnowledgeMap() {
   document.getElementById("km-canvas-wrap").style.display="none";
   document.getElementById("km-detail").style.display="none";
   document.getElementById("km-legend").style.display="none";
-  kmNodePositions = [];
-  kmPanX = 0; kmPanY = 0;
+  document.getElementById("km-search-results").style.display = "none";
+  if (kmAnimId) { cancelAnimationFrame(kmAnimId); kmAnimId = null; }
+  kmNodePositions = []; kmNodeMap = {};
+  kmPanX = 0; kmPanY = 0; kmZoom = 1;
+  kmHighlightMode = false;
+  kmChar.nodeId = null; kmChar.x = 0; kmChar.y = 0; kmChar.moving = false;
+  kmParticles = []; kmWeatherParticles = []; kmFloatingTexts = []; kmFootprints = [];
+  document.getElementById("km-btn-highlight").classList.remove("active");
+
+  if (state.course) {
+    try {
+      const stats = await api(`/api/stats?course=${state.course}`);
+      updateLessonInfoBar(stats);
+    } catch(e) {
+      document.getElementById("li-lesson").textContent = "";
+      document.getElementById("li-time").textContent = "";
+      document.getElementById("li-streak").textContent = "";
+    }
+  } else {
+    updateLessonInfoBar(null);
+  }
 
   if (!state.course) {
     document.getElementById("km-empty").style.display="block";
@@ -529,8 +828,9 @@ async function renderKnowledgeMap() {
 
   const nodesObj = data.nodes || {};
   const nodeList = Object.entries(nodesObj).map(([id, n]) => ({ ...n, node_id: id }));
+  nodeList.forEach(n => { kmNodeMap[n.node_id] = n; });
 
-  // 统计
+  // Stats
   const counts = {};
   nodeList.forEach(n => { counts[n.status] = (counts[n.status]||0)+1; });
   const labels = { "稳固":"stable","不稳":"unstable","卡住":"stuck","未学":"unlearned" };
@@ -542,14 +842,13 @@ async function renderKnowledgeMap() {
   }
   document.getElementById("km-stats").innerHTML = statsHtml;
 
-  // 依赖图
   if (nodeList.length > 0) {
     document.getElementById("km-legend").style.display = "flex";
     document.getElementById("km-canvas-wrap").style.display = "block";
     drawDependencyGraph(nodeList);
   }
 
-  // 推荐（可折叠）
+  // Recommendations
   const weak = nodeList.filter(n => n.status==="卡住"||n.status==="不稳");
   weak.sort((a,b) => (b.needed_by||[]).length - (a.needed_by||[]).length);
   if (weak.length>0) {
@@ -571,7 +870,6 @@ async function renderKnowledgeMap() {
     document.getElementById("km-recommend-wrap").style.display = "";
   }
 
-  // 全部节点列表（可折叠）
   let nodesHtml = '';
   nodeList.forEach(n => {
     const statusCls = { "稳固":"status-stable","不稳":"status-unstable","卡住":"status-stuck" }[n.status]||"status-unlearned";
@@ -585,200 +883,523 @@ async function renderKnowledgeMap() {
   document.getElementById("km-nodes-wrap").style.display = "";
 }
 
-function computeLayers(nodeList) {
-  const layers = {};
-  const nodeMap = {};
-  nodeList.forEach(n => { nodeMap[n.node_id] = n; });
+// ═══ Force-Directed Layout ═══
+function forceDirectedLayout(nodeList) {
+  const positions = {};
+  const W = 1400, H = 900;
+  const cx = W/2, cy = H/2;
 
-  function getLayer(nodeId, visited) {
-    if (layers[nodeId] !== undefined) return layers[nodeId];
-    if (!visited) visited = new Set();
-    if (visited.has(nodeId)) return 0;
-    visited.add(nodeId);
-    const n = nodeMap[nodeId];
-    if (!n || !n.depends_on || n.depends_on.length === 0) {
-      layers[nodeId] = 0;
-    } else {
-      let maxDep = 0;
-      n.depends_on.forEach(d => { maxDep = Math.max(maxDep, getLayer(d, visited)); });
-      layers[nodeId] = maxDep + 1;
-    }
-    return layers[nodeId];
-  }
-
-  nodeList.forEach(n => getLayer(n.node_id));
-
-  const layerGroups = {};
-  nodeList.forEach(n => {
-    const l = layers[n.node_id] || 0;
-    if (!layerGroups[l]) layerGroups[l] = [];
-    layerGroups[l].push(n);
+  // Init in circle
+  nodeList.forEach((n, i) => {
+    const angle = (i / nodeList.length) * Math.PI * 2 + Math.random() * 0.4;
+    const r = 40 + Math.random() * 60;
+    positions[n.node_id] = { x: cx + Math.cos(angle)*r, y: cy + Math.sin(angle)*r, vx: 0, vy: 0 };
   });
 
-  return { layers, layerGroups, nodeMap };
+  // Build edges
+  const edges = [];
+  nodeList.forEach(n => {
+    (n.depends_on || []).forEach(dep => {
+      if (positions[dep]) edges.push({ from: dep, to: n.node_id });
+    });
+  });
+
+  // Simulate
+  const ITER = 200, REPULSION = 8000, ATTRACT = 0.004, DAMP = 0.82, CENTER = 0.003;
+  for (let iter = 0; iter < ITER; iter++) {
+    const ids = Object.keys(positions);
+    // Repulsion
+    for (let i = 0; i < ids.length; i++) {
+      for (let j = i + 1; j < ids.length; j++) {
+        const a = positions[ids[i]], b = positions[ids[j]];
+        let dx = b.x - a.x, dy = b.y - a.y;
+        let dist = Math.sqrt(dx*dx + dy*dy) || 1;
+        if (dist > 450) continue;
+        let force = REPULSION / (dist * dist);
+        const fx = (dx/dist) * force, fy = (dy/dist) * force;
+        a.vx -= fx; a.vy -= fy; b.vx += fx; b.vy += fy;
+      }
+    }
+    // Attraction
+    edges.forEach(e => {
+      const a = positions[e.from], b = positions[e.to];
+      if (!a || !b) return;
+      let dx = b.x - a.x, dy = b.y - a.y;
+      let dist = Math.sqrt(dx*dx + dy*dy) || 1;
+      let force = dist * ATTRACT;
+      const fx = (dx/dist) * force, fy = (dy/dist) * force;
+      a.vx += fx; a.vy += fy; b.vx -= fx; b.vy -= fy;
+    });
+    // Center + damp
+    for (const id of ids) {
+      const p = positions[id];
+      p.vx += (cx - p.x) * CENTER;
+      p.vy += (cy - p.y) * CENTER;
+      p.vx *= DAMP; p.vy *= DAMP;
+      p.x += p.vx; p.y += p.vy;
+    }
+  }
+
+  // Bounds
+  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+  const ids = Object.keys(positions);
+  for (const id of ids) {
+    const p = positions[id];
+    if (p.x < minX) minX = p.x; if (p.y < minY) minY = p.y;
+    if (p.x > maxX) maxX = p.x; if (p.y > maxY) maxY = p.y;
+  }
+
+  return { positions, width: Math.max(maxX - minX + 200, 800), height: Math.max(maxY - minY + 200, 500), minX, minY };
 }
 
-// ── 绘制知识地图 ──
+// ═══ Spawn edge particles ═══
+function spawnEdgeParticles(src, dst, srcStatus, dstStatus) {
+  const count = (srcStatus === '稳固' && dstStatus === '稳固') ? 4 :
+                (srcStatus === '稳固' || dstStatus === '稳固') ? 2 :
+                (srcStatus === '不稳' || dstStatus === '不稳') ? 1 : 0;
+  for (let i = 0; i < count; i++) {
+    kmParticles.push({
+      srcX: src.cx, srcY: src.cy, dstX: dst.cx, dstY: dst.cy,
+      t: Math.random(), speed: 0.003 + Math.random() * 0.008,
+      size: 1.5 + Math.random() * 2.5,
+      alpha: 0.4 + Math.random() * 0.5,
+      color: srcStatus === '稳固' && dstStatus === '稳固' ? '200,160,50' :
+             srcStatus === '卡住' || dstStatus === '卡住' ? '200,80,70' : '180,150,100',
+    });
+  }
+}
 
-let kmSelectedNode = null;
+// ═══ Spawn weather particles ═══
+function spawnWeatherParticles(w, h) {
+  const hour = new Date().getHours();
+  if ((hour >= 18 || hour < 6) && Math.random() < 0.04) {
+    kmWeatherParticles.push({
+      x: Math.random()*w, y: Math.random()*h,
+      vx: (Math.random()-0.5)*0.4, vy: (Math.random()-0.5)*0.4,
+      life: 1, decay: 0.002+Math.random()*0.006,
+      size: 1+Math.random()*2.5, color: '180,220,140',
+    });
+  }
+  if (hour >= 6 && hour < 10 && Math.random() < 0.06) {
+    kmWeatherParticles.push({
+      x: Math.random()*w*0.3, y: Math.random()*h*0.2,
+      vx: 0.15+Math.random()*0.35, vy: 0.08+Math.random()*0.2,
+      life: 1, decay: 0.003+Math.random()*0.006,
+      size: 1+Math.random()*2.5, color: '240,210,140',
+    });
+  }
+  if ((hour >= 22 || hour < 6) && Math.random() < 0.03) {
+    kmWeatherParticles.push({
+      x: Math.random()*w, y: Math.random()*h,
+      vx: (Math.random()-0.5)*0.15, vy: -0.03-Math.random()*0.12,
+      life: 1, decay: 0.001+Math.random()*0.004,
+      size: 1+Math.random()*1.5, color: '140,160,220',
+    });
+  }
+}
 
+// ═══ drawDependencyGraph — Fantasy Edition ═══
 function drawDependencyGraph(nodeList) {
   const wrap = document.getElementById("km-canvas-wrap");
   const canvas = document.getElementById("km-canvas");
   const ctx = canvas.getContext("2d");
-
-  const { layerGroups } = computeLayers(nodeList);
-  const sortedLayers = Object.keys(layerGroups).map(Number).sort((a, b) => a - b);
-
-  const nodeW = 165, nodeH = 40;
-  const layerGapX = 210, nodeGapY = 22;
-  const margin = { top: 36, left: 30, right: 30, bottom: 20 };
-
-  const maxNodesInLayer = Math.max(...Object.values(layerGroups).map(a => a.length), 1);
-  const logicW = margin.left + sortedLayers.length * layerGapX + margin.right;
-  const logicH = margin.top + maxNodesInLayer * (nodeH + nodeGapY) + margin.bottom;
-
-  // DPI
   const dpr = window.devicePixelRatio || 1;
-  canvas.width = logicW * dpr;
-  canvas.height = logicH * dpr;
-  canvas.style.width = logicW + "px";
-  canvas.style.height = logicH + "px";
 
-  function draw() {
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    ctx.clearRect(0, 0, logicW, logicH);
+  // Force-directed layout
+  const layout = forceDirectedLayout(nodeList);
+  const { positions } = layout;
+  const NODE_R = 12;
 
-    // 背景
-    ctx.fillStyle = "#1a1a1e";
-    ctx.fillRect(0, 0, logicW, logicH);
-    // 点阵
-    ctx.fillStyle = "rgba(200, 160, 80, 0.05)";
-    for (let gx = 20; gx < logicW + 60; gx += 20) {
-      for (let gy = 20; gy < logicH + 60; gy += 20) {
-        const px = ((gx - kmPanX) % (logicW + 60) + logicW + 60) % (logicW + 60);
-        const py = ((gy - kmPanY) % (logicH + 60) + logicH + 60) % (logicH + 60);
-        ctx.beginPath();
-        ctx.arc(px - 30, py - 30, 1, 0, Math.PI * 2);
-        ctx.fill();
-      }
-    }
-    // 章节虚线
-    ctx.strokeStyle = "rgba(120, 120, 130, 0.12)";
-    ctx.lineWidth = 1;
-    ctx.setLineDash([4, 8]);
-    for (let gy = margin.top; gy < logicH; gy += 70) {
-      ctx.beginPath();
-      ctx.moveTo(0, gy);
-      ctx.lineTo(logicW, gy);
-      ctx.stroke();
-    }
-    ctx.setLineDash([]);
-
-    // 应用平移
-    ctx.save();
-    ctx.translate(kmPanX, kmPanY);
-
-    // ── 画边 ──
-    kmNodePositions.forEach(pos => {
-      const deps = pos.node.depends_on || [];
-      deps.forEach(depId => {
-        const src = kmNodePositions.find(p => p.node.node_id === depId);
-        if (!src) return;
-        const x1 = src.x + src.w, y1 = src.cy;
-        const x2 = pos.x, y2 = pos.cy;
-
-        const edgeAlpha = (pos.node.status === "未学" || src.node.status === "未学") ? 0.25 : 0.55;
-        ctx.strokeStyle = `rgba(180,150,100,${edgeAlpha})`;
-        ctx.lineWidth = 1.5;
-        ctx.fillStyle = `rgba(180,150,100,${edgeAlpha})`;
-
-        ctx.beginPath();
-        ctx.moveTo(x1, y1);
-        const cpX = (x1 + x2) / 2;
-        ctx.bezierCurveTo(cpX, y1, cpX, y2, x2, y2);
-        ctx.stroke();
-
-        const arrowSize = 6;
-        ctx.beginPath();
-        ctx.moveTo(x2, y2);
-        ctx.lineTo(x2 - arrowSize, y2 - arrowSize * 0.55);
-        ctx.lineTo(x2 - arrowSize, y2 + arrowSize * 0.55);
-        ctx.closePath();
-        ctx.fill();
-      });
-    });
-
-    // ── 画节点 ──
-    const statusColors = {
-      "稳固": { fill: "#2a4a2a", stroke: "#4a7a4a", glow: "rgba(106,170,106,0.15)" },
-      "不稳": { fill: "#4a4020", stroke: "#8a7020", glow: "rgba(200,160,50,0.12)" },
-      "卡住": { fill: "#4a2020", stroke: "#8a3030", glow: "rgba(200,80,80,0.18)" },
-      "未学": { fill: "#252528", stroke: "#444", glow: "rgba(100,100,100,0.05)" },
-    };
-
-    kmNodePositions.forEach(pos => {
-      const n = pos.node;
-      const sc = statusColors[n.status] || statusColors["未学"];
-      const isSelected = kmSelectedNode === n.node_id;
-
-      // 发光（选中时加强）
-      ctx.fillStyle = isSelected ? sc.glow.replace("0.15", "0.4").replace("0.12", "0.35").replace("0.18", "0.45").replace("0.05", "0.25") : sc.glow;
-      const glowR = isSelected ? 10 : 7;
-      ctx.beginPath();
-      roundedRect(ctx, pos.x - glowR, pos.y - glowR, pos.w + glowR * 2, pos.h + glowR * 2, 10);
-      ctx.fill();
-
-      // 主体
-      ctx.fillStyle = isSelected ? sc.fill.replace("2a", "3a").replace("4a", "5a").replace("25", "35") : sc.fill;
-      ctx.strokeStyle = isSelected ? "#c8a050" : sc.stroke;
-      ctx.lineWidth = isSelected ? 2.5 : 1.8;
-
-      roundedRect(ctx, pos.x, pos.y, pos.w, pos.h, 8);
-      ctx.fill();
-      ctx.stroke();
-
-      // 名称
-      ctx.fillStyle = "#e8e8f0";
-      ctx.font = "bold 13px 'Microsoft YaHei', 'Segoe UI', sans-serif";
-      ctx.textAlign = "center";
-      ctx.textBaseline = "middle";
-      const label = n.name.length > 10 ? n.name.slice(0, 9) + "…" : n.name;
-      ctx.fillText(label, pos.cx, pos.cy - 4);
-
-      // ID
-      ctx.fillStyle = "#808088";
-      ctx.font = "10px 'Microsoft YaHei', 'Segoe UI', sans-serif";
-      ctx.fillText(n.node_id, pos.cx, pos.cy + 14);
-    });
-
-    ctx.restore(); // 平移结束
-  }
-
-  // ── 节点位置计算 ──
+  // Build kmNodePositions with circle geometry
   kmNodePositions = [];
-  sortedLayers.forEach((layerIdx, li) => {
-    const nodesInLayer = layerGroups[layerIdx];
-    const totalHeight = nodesInLayer.length * (nodeH + nodeGapY) - nodeGapY;
-    const startY = margin.top + (maxNodesInLayer * (nodeH + nodeGapY) - totalHeight) / 2;
-    const lx = margin.left + li * layerGapX;
-    nodesInLayer.forEach((n, ni) => {
-      const y = startY + ni * (nodeH + nodeGapY);
-      kmNodePositions.push({ node: n, x: lx, y, w: nodeW, h: nodeH, cx: lx + nodeW / 2, cy: y + nodeH / 2 });
+  nodeList.forEach(n => {
+    const p = positions[n.node_id];
+    if (!p) return;
+    kmNodePositions.push({
+      node: n, cx: p.x, cy: p.y, r: NODE_R,
+      x: p.x - NODE_R, y: p.y - NODE_R, w: NODE_R*2, h: NODE_R*2,
     });
   });
 
-  // 初始绘制
-  kmRedraw = draw;
-  draw();
+  const margin = 100;
+  let mapW = layout.width + margin*2;
+  let mapH = layout.height + margin*2;
 
-  // ── 右键拖动平移 ──
+  // Offset positions
+  const ox = margin - (layout.minX || 0) + 60;
+  const oy = margin - (layout.minY || 0) + 60;
+  kmNodePositions.forEach(pos => { pos.cx += ox; pos.cy += oy; pos.x += ox; pos.y += oy; });
+  mapW += ox; mapH += oy;
+
+  // Init character position
+  if (!kmChar.nodeId && kmNodePositions.length > 0) {
+    const stableNode = kmNodePositions.find(p => p.node.status === '稳固');
+    const startNode = stableNode || kmNodePositions[0];
+    kmChar.nodeId = startNode.node.node_id;
+    kmChar.x = startNode.cx; kmChar.y = startNode.cy;
+    kmChar.targetX = startNode.cx; kmChar.targetY = startNode.cy;
+    updateCharPose();
+  }
+
+  // Init particles
+  kmParticles = [];
+  kmNodePositions.forEach(pos => {
+    (pos.node.depends_on || []).forEach(depId => {
+      const src = kmNodePositions.find(p => p.node.node_id === depId);
+      if (!src) return;
+      spawnEdgeParticles(src, pos, src.node.status, pos.node.status);
+    });
+  });
+
+  function resizeCanvas() {
+    const w = wrap.clientWidth, h = wrap.clientHeight;
+    if (canvas.width !== w*dpr || canvas.height !== h*dpr) {
+      canvas.width = w * dpr; canvas.height = h * dpr;
+      canvas.style.width = w + "px"; canvas.style.height = h + "px";
+    }
+  }
+  resizeCanvas();
+
+  // ═══ DRAW FRAME ═══
+  function drawFrame() {
+    resizeCanvas();
+    const cw = canvas.width / dpr, ch = canvas.height / dpr;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.clearRect(0, 0, cw, ch);
+
+    // ── Parchment background ──
+    if (kmParchmentImg && kmParchmentImg.complete && kmParchmentImg.naturalWidth > 0) {
+      const pw = kmParchmentImg.naturalWidth, ph = kmParchmentImg.naturalHeight;
+      const sc = Math.max(cw/pw, ch/ph) * 1.2;
+      ctx.drawImage(kmParchmentImg, (cw - pw*sc)/2, (ch - ph*sc)/2, pw*sc, ph*sc);
+      ctx.fillStyle = 'rgba(10, 8, 16, 0.25)';
+      ctx.fillRect(0, 0, cw, ch);
+    } else {
+      ctx.fillStyle = '#141218';
+      ctx.fillRect(0, 0, cw, ch);
+      ctx.fillStyle = 'rgba(200, 160, 80, 0.025)';
+      for (let gx = 12; gx < cw; gx += 12) {
+        for (let gy = 12; gy < ch; gy += 12) {
+          ctx.beginPath(); ctx.arc(gx, gy, 0.5, 0, Math.PI*2); ctx.fill();
+        }
+      }
+    }
+
+    // ── Compass rose decoration ──
+    if (kmCompassImg && kmCompassImg.complete && kmCompassImg.naturalWidth > 0) {
+      const compSize = 70;
+      ctx.globalAlpha = 0.3;
+      ctx.drawImage(kmCompassImg, cw - compSize - 16, ch - compSize - 16, compSize, compSize);
+      ctx.globalAlpha = 1;
+    }
+
+    // ── Apply pan/zoom ──
+    ctx.save();
+    ctx.translate(kmPanX, kmPanY);
+    ctx.scale(kmZoom, kmZoom);
+
+    // ── Highlight sets ──
+    let highlightDepIds = new Set();
+    let highlightNeededByIds = new Set();
+    if (kmHighlightMode && kmSelectedNode) {
+      function collectDeps(nid, visited) {
+        if (visited.has(nid)) return; visited.add(nid); highlightDepIds.add(nid);
+        const node = kmNodeMap[nid];
+        if (node && node.depends_on) node.depends_on.forEach(d => collectDeps(d, visited));
+      }
+      function collectNeededBy(nid, visited) {
+        if (visited.has(nid)) return; visited.add(nid); highlightNeededByIds.add(nid);
+        const node = kmNodeMap[nid];
+        if (node && node.needed_by) node.needed_by.forEach(nb => collectNeededBy(nb, visited));
+      }
+      collectDeps(kmSelectedNode, new Set());
+      collectNeededBy(kmSelectedNode, new Set());
+    }
+
+    // ── Draw edges ──
+    kmNodePositions.forEach(pos => {
+      (pos.node.depends_on || []).forEach(depId => {
+        const src = kmNodePositions.find(p => p.node.node_id === depId);
+        if (!src) return;
+
+        const bothUnlearned = pos.node.status === '未学' && src.node.status === '未学';
+        let alpha = bothUnlearned ? 0.18 : 0.6;
+        let color = bothUnlearned ? '120,110,90' : '190,170,140';
+        let width = bothUnlearned ? 0.8 : 1.5;
+
+        if (kmHighlightMode && kmSelectedNode) {
+          const isDep = highlightDepIds.has(pos.node.node_id) && highlightDepIds.has(depId);
+          const isNb = highlightNeededByIds.has(pos.node.node_id) && highlightNeededByIds.has(depId);
+          if (isDep) { color = '100,170,220'; alpha = 0.75; width = 2.2; }
+          else if (isNb) { color = '220,160,80'; alpha = 0.7; width = 2.2; }
+          else { alpha = 0.04; width = 0.5; }
+        }
+
+        if (bothUnlearned) ctx.setLineDash([4, 8]);
+
+        ctx.strokeStyle = `rgba(${color},${alpha})`;
+        ctx.lineWidth = width;
+        ctx.beginPath();
+        const mx = (src.cx + pos.cx) / 2, my = (src.cy + pos.cy) / 2;
+        const curve = Math.min(Math.abs(pos.cx - src.cx) * 0.12, 25);
+        ctx.moveTo(src.cx, src.cy);
+        ctx.quadraticCurveTo(mx, my - curve, pos.cx, pos.cy);
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        // Arrow
+        if (!bothUnlearned) {
+          const t = 0.93;
+          const bx = src.cx + (pos.cx - src.cx) * t;
+          const by = src.cy + (pos.cy - src.cy) * t - curve * 4 * t * (1-t);
+          const ang = Math.atan2(pos.cy - src.cy, pos.cx - src.cx);
+          const asz = 5;
+          ctx.fillStyle = `rgba(${color},${alpha + 0.1})`;
+          ctx.beginPath();
+          ctx.moveTo(bx + Math.cos(ang)*asz, by + Math.sin(ang)*asz);
+          ctx.lineTo(bx - Math.cos(ang-0.55)*asz, by - Math.sin(ang-0.55)*asz);
+          ctx.lineTo(bx - Math.cos(ang+0.55)*asz, by - Math.sin(ang+0.55)*asz);
+          ctx.closePath(); ctx.fill();
+        }
+      });
+    });
+
+    // ── Edge particles ──
+    kmParticles.forEach(p => {
+      p.t += p.speed;
+      if (p.t > 1) p.t -= 1;
+      const x = p.srcX + (p.dstX - p.srcX) * p.t;
+      const y = p.srcY + (p.dstY - p.srcY) * p.t;
+      // Glow
+      ctx.fillStyle = `rgba(${p.color},${p.alpha*0.3})`;
+      ctx.beginPath(); ctx.arc(x, y, p.size*2, 0, Math.PI*2); ctx.fill();
+      // Core
+      ctx.fillStyle = `rgba(${p.color},${p.alpha})`;
+      ctx.beginPath(); ctx.arc(x, y, p.size, 0, Math.PI*2); ctx.fill();
+    });
+
+    // ── War fog ──
+    ctx.save();
+    ctx.fillStyle = 'rgba(6, 4, 14, 0.52)';
+    ctx.fillRect(-margin*2, -margin*2, mapW + margin*4, mapH + margin*4);
+
+    ctx.globalCompositeOperation = 'destination-out';
+    kmNodePositions.forEach(pos => {
+      let radius;
+      if (pos.node.status === '稳固') radius = 80;
+      else if (pos.node.status === '不稳') radius = 50;
+      else if (pos.node.status === '卡住') radius = 35;
+      else return;
+
+      const grad = ctx.createRadialGradient(pos.cx, pos.cy, radius*0.25, pos.cx, pos.cy, radius);
+      grad.addColorStop(0, 'rgba(0,0,0,0.95)');
+      grad.addColorStop(0.4, 'rgba(0,0,0,0.55)');
+      grad.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = grad;
+      ctx.beginPath(); ctx.arc(pos.cx, pos.cy, radius, 0, Math.PI*2); ctx.fill();
+    });
+    ctx.restore();
+
+    // ── Draw nodes (glowing orbs) ──
+    kmNodePositions.forEach(pos => {
+      const n = pos.node;
+      const isSelected = kmSelectedNode === n.node_id;
+
+      let nodeAlpha = 1;
+      if (kmHighlightMode && kmSelectedNode && !isSelected) {
+        const nid = n.node_id;
+        if (!highlightDepIds.has(nid) && !highlightNeededByIds.has(nid)) nodeAlpha = 0.22;
+      }
+      if (nodeAlpha < 0.05) return;
+      ctx.globalAlpha = nodeAlpha;
+
+      // Glow colors
+      const glowColors = {
+        '稳固': 'rgba(180, 220, 80, 0.55)',
+        '不稳': 'rgba(220, 180, 60, 0.45)',
+        '卡住': 'rgba(220, 90, 70, 0.5)',
+        '未学': 'rgba(80, 80, 100, 0.15)',
+      };
+      const glowRadius = { '稳固': 10, '不稳': 6, '卡住': 8, '未学': 2 };
+
+      // Outer glow shadow
+      if (isSelected) {
+        ctx.shadowColor = 'rgba(255, 210, 80, 0.9)';
+        ctx.shadowBlur = 28;
+      } else if (n.status !== '未学') {
+        ctx.shadowColor = glowColors[n.status];
+        ctx.shadowBlur = glowRadius[n.status];
+      }
+
+      // Body gradient
+      const bodyTop = {
+        '稳固': '#7ab830', '不稳': '#c8a030', '卡住': '#b84830', '未学': '#3e3e48',
+      };
+      const bodyBot = {
+        '稳固': '#3a6018', '不稳': '#7a5010', '卡住': '#601818', '未学': '#1e1e26',
+      };
+      const topC = isSelected ? '#e0b848' : (bodyTop[n.status] || bodyTop['未学']);
+      const botC = isSelected ? '#906820' : (bodyBot[n.status] || bodyBot['未学']);
+
+      const grad = ctx.createRadialGradient(pos.cx - pos.r*0.3, pos.cy - pos.r*0.3, pos.r*0.08, pos.cx, pos.cy, pos.r);
+      grad.addColorStop(0, topC);
+      grad.addColorStop(1, botC);
+      ctx.fillStyle = grad;
+
+      // Border
+      const borderColor = {
+        '稳固': '#90d840', '不稳': '#e0b840', '卡住': '#d05040', '未学': '#4a4a54',
+      };
+      ctx.strokeStyle = isSelected ? '#f0d860' : (borderColor[n.status] || '#4a4a54');
+      ctx.lineWidth = isSelected ? 2.8 : 1.5;
+
+      ctx.beginPath(); ctx.arc(pos.cx, pos.cy, pos.r, 0, Math.PI*2); ctx.fill(); ctx.stroke();
+
+      // Inner highlight
+      ctx.fillStyle = 'rgba(255,255,255,0.13)';
+      ctx.beginPath(); ctx.arc(pos.cx - pos.r*0.25, pos.cy - pos.r*0.3, pos.r*0.32, 0, Math.PI*2); ctx.fill();
+
+      ctx.shadowColor = 'transparent'; ctx.shadowBlur = 0;
+
+      // Label below node
+      const fontSize = n.status === '未学' ? 10 : 11;
+      ctx.fillStyle = n.status === '未学' ? '#777' : '#d8d0c0';
+      ctx.font = `bold ${fontSize}px 'Microsoft YaHei', sans-serif`;
+      ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+      const label = n.name.length > 7 ? n.name.slice(0,6) + '…' : n.name;
+      ctx.fillText(label, pos.cx, pos.cy + pos.r + 7);
+
+      // Node ID
+      ctx.fillStyle = '#666';
+      ctx.font = '9px sans-serif';
+      ctx.fillText(n.node_id, pos.cx, pos.cy + pos.r + 21);
+
+      // Status indicator ── marker icon or dot
+      if (n.status !== '未学') {
+        if (kmMarkerImg && kmMarkerImg.complete && kmMarkerImg.naturalWidth > 0) {
+          ctx.drawImage(kmMarkerImg, pos.cx + pos.r*0.5, pos.cy - pos.r - 12, 14, 14);
+        } else {
+          const dotColor = { '稳固': '#90d840', '不稳': '#e0b840', '卡住': '#e06040' };
+          ctx.fillStyle = dotColor[n.status] || '#888';
+          ctx.beginPath();
+          ctx.arc(pos.cx + pos.r*0.7, pos.cy - pos.r*0.7, 4, 0, Math.PI*2);
+          ctx.fill();
+        }
+      }
+
+      ctx.globalAlpha = 1;
+    });
+
+    // ── Footprints ──
+    kmFootprints.forEach((fp, i) => {
+      const alpha = (i + 1) / kmFootprints.length * 0.35;
+      ctx.fillStyle = `rgba(200, 180, 140, ${alpha})`;
+      ctx.beginPath(); ctx.arc(fp.x, fp.y, 3.5, 0, Math.PI*2); ctx.fill();
+    });
+
+    // ── Floating texts ──
+    kmFloatingTexts.forEach(ft => {
+      ctx.fillStyle = `rgba(255, 220, 100, ${ft.alpha})`;
+      ctx.font = 'bold 12px "Noto Serif SC", serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(ft.text, ft.x, ft.y);
+    });
+
+    // ── Character ──
+    if (kmAdventurerImg && kmAdventurerImg.complete && kmAdventurerImg.naturalWidth > 0) {
+      const charSize = 50;
+      const frameW = kmAdventurerImg.naturalWidth / 4;
+      const frameH = kmAdventurerImg.naturalHeight;
+
+      let frameIdx = kmChar.frame;
+
+      if (kmChar.moving) {
+        const elapsed = performance.now() - kmChar.moveStart;
+        const progress = Math.min(elapsed / kmChar.moveDuration, 1);
+        const t = progress < 0.5 ? 2*progress*progress : -1 + (4 - 2*progress)*progress; // ease in-out
+        kmChar.x = kmChar.startX + (kmChar.targetX - kmChar.startX) * t;
+        kmChar.y = kmChar.startY + (kmChar.targetY - kmChar.startY) * t - Math.sin(progress * Math.PI) * 24;
+        frameIdx = 1; // walking frame
+
+        if (progress >= 1) {
+          kmChar.moving = false;
+          kmChar.x = kmChar.targetX; kmChar.y = kmChar.targetY;
+          updateCharPose();
+        }
+      }
+
+      let bobY = 0;
+      if (!kmChar.moving) {
+        bobY = Math.sin(kmClock * 0.025) * 2.5;
+      }
+
+      const chX = kmChar.x, chY = kmChar.y + bobY;
+      const sx = frameIdx * frameW;
+
+      ctx.save();
+      ctx.drawImage(kmAdventurerImg, sx, 0, frameW, frameH, chX - charSize/2, chY - charSize, charSize, charSize * (frameH/frameW));
+      ctx.restore();
+
+      // Under-character glow
+      ctx.fillStyle = 'rgba(255, 210, 130, 0.12)';
+      ctx.beginPath(); ctx.ellipse(chX, chY + 6, charSize*0.4, 4, 0, 0, Math.PI*2); ctx.fill();
+    }
+
+    // ── Weather particles ──
+    kmWeatherParticles.forEach(p => {
+      p.x += p.vx; p.y += p.vy; p.life -= p.decay;
+      ctx.fillStyle = `rgba(${p.color},${Math.max(0, p.life)})`;
+      ctx.beginPath(); ctx.arc(p.x, p.y, p.size, 0, Math.PI*2); ctx.fill();
+      // Glow
+      ctx.fillStyle = `rgba(${p.color},${Math.max(0, p.life*0.25)})`;
+      ctx.beginPath(); ctx.arc(p.x, p.y, p.size*2.5, 0, Math.PI*2); ctx.fill();
+    });
+    kmWeatherParticles = kmWeatherParticles.filter(p => p.life > 0);
+
+    ctx.restore(); // end pan/zoom
+    kmClock++;
+  }
+
+  // ═══ Animation loop ═══
+  function animate() {
+    drawFrame();
+
+    // Spawn weather
+    if (kmClock % 4 === 0) {
+      spawnWeatherParticles(canvas.width / dpr, canvas.height / dpr);
+    }
+    if (kmWeatherParticles.length > 70) kmWeatherParticles = kmWeatherParticles.slice(-55);
+
+    // Age floating texts
+    kmFloatingTexts.forEach(ft => { ft.y -= 0.35; ft.alpha -= 0.006; });
+    kmFloatingTexts = kmFloatingTexts.filter(ft => ft.alpha > 0);
+
+    kmAnimId = requestAnimationFrame(animate);
+  }
+
+  kmRedraw = drawFrame;
+  if (kmAnimId) cancelAnimationFrame(kmAnimId);
+  kmAnimId = requestAnimationFrame(animate);
+
+  // ═══ Hit test (world coords from screen coords) ═══
+  function hitTestNode(sx, sy) {
+    const rect = wrap.getBoundingClientRect();
+    const wx = (sx - rect.left - kmPanX) / kmZoom;
+    const wy = (sy - rect.top - kmPanY) / kmZoom;
+    for (const pos of kmNodePositions) {
+      const dx = wx - pos.cx, dy = wy - pos.cy;
+      if (Math.sqrt(dx*dx + dy*dy) <= pos.r + 6) return pos;
+    }
+    return null;
+  }
+
+  // ═══ Event handlers ═══
   let dragging = false, dragStartX = 0, dragStartY = 0, startPanX = 0, startPanY = 0;
 
-  wrap.oncontextmenu = function(e) { e.preventDefault(); };
+  wrap.oncontextmenu = e => e.preventDefault();
 
   wrap.onmousedown = function(e) {
-    if (e.button === 2) { // 右键
+    if (e.button === 2) {
       e.preventDefault();
       dragging = true;
       dragStartX = e.clientX; dragStartY = e.clientY;
@@ -791,48 +1412,133 @@ function drawDependencyGraph(nodeList) {
     if (!dragging) return;
     kmPanX = startPanX + (e.clientX - dragStartX);
     kmPanY = startPanY + (e.clientY - dragStartY);
-    draw();
     document.getElementById("km-detail").style.display = "none";
     kmSelectedNode = null;
   });
 
-  window.addEventListener("mouseup", function(e) {
-    if (dragging) {
-      dragging = false;
-      wrap.classList.remove("grabbing");
-    }
+  window.addEventListener("mouseup", function() {
+    if (dragging) { dragging = false; wrap.classList.remove("grabbing"); }
   });
 
-  // ── 左键点击节点 ──
+  wrap.onwheel = function(e) {
+    e.preventDefault();
+    const rect = canvas.getBoundingClientRect();
+    const mx = e.clientX - rect.left, my = e.clientY - rect.top;
+    const oldZoom = kmZoom;
+    kmZoom = Math.max(0.18, Math.min(4.5, kmZoom * (e.deltaY < 0 ? 1.08 : 0.92)));
+    kmPanX = mx - (mx - kmPanX) * (kmZoom / oldZoom);
+    kmPanY = my - (my - kmPanY) * (kmZoom / oldZoom);
+    document.getElementById("km-detail").style.display = "none";
+    kmSelectedNode = null;
+  };
+
   wrap.onclick = function(e) {
     if (dragging) return;
-    const rect = canvas.getBoundingClientRect();
-    const scaleX = logicW / rect.width;
-    const scaleY = logicH / rect.height;
-    const mx = (e.clientX - rect.left) * scaleX - kmPanX;
-    const my = (e.clientY - rect.top) * scaleY - kmPanY;
-
-    for (const pos of kmNodePositions) {
-      if (mx >= pos.x && mx <= pos.x + pos.w && my >= pos.y && my <= pos.y + pos.h) {
-        if (kmSelectedNode === pos.node.node_id) {
-          // 再次点击 → 收起
-          kmSelectedNode = null;
-          document.getElementById("km-detail").style.display = "none";
-        } else {
-          kmSelectedNode = pos.node.node_id;
-          showNodeDetail(pos.node.node_id, e.clientX, e.clientY);
-        }
-        draw();
-        return;
+    const pos = hitTestNode(e.clientX, e.clientY);
+    if (pos) {
+      if (kmSelectedNode === pos.node.node_id) {
+        kmSelectedNode = null;
+        document.getElementById("km-detail").style.display = "none";
+      } else {
+        kmSelectedNode = pos.node.node_id;
+        showNodeDetail(pos.node.node_id, e.clientX, e.clientY);
+        moveCharacterTo(pos);
       }
+    } else {
+      kmSelectedNode = null;
+      document.getElementById("km-detail").style.display = "none";
     }
-    // 点击空白 → 收起
-    kmSelectedNode = null;
-    document.getElementById("km-detail").style.display = "none";
-    draw();
+  };
+
+  wrap.ondblclick = function(e) {
+    if (dragging) return;
+    const pos = hitTestNode(e.clientX, e.clientY);
+    if (pos) {
+      e.preventDefault();
+      kmSelectedNode = pos.node.node_id;
+      focusNode(pos.node.node_id);
+    }
   };
 }
 
+// ═══ Character movement ═══
+function moveCharacterTo(targetPos) {
+  if (kmChar.moving && kmChar.nodeId === targetPos.node.node_id) return;
+
+  if (kmChar.nodeId && kmChar.x > 0 && kmChar.y > 0) {
+    kmFootprints.push({ x: kmChar.x, y: kmChar.y + 12 });
+    if (kmFootprints.length > 8) kmFootprints.shift();
+  }
+
+  kmChar.nodeId = targetPos.node.node_id;
+  kmChar.startX = kmChar.x || targetPos.cx;
+  kmChar.startY = kmChar.y || targetPos.cy;
+  kmChar.targetX = targetPos.cx;
+  kmChar.targetY = targetPos.cy;
+  kmChar.moveStart = performance.now();
+  kmChar.moving = true;
+
+  if (targetPos.node.status === '稳固') {
+    kmFloatingTexts.push({ x: targetPos.cx, y: targetPos.cy - 42, text: '+10 EXP', alpha: 1 });
+    kmXP += 10;
+    if (kmXP >= kmLevel * XP_PER_LEVEL) {
+      kmXP -= kmLevel * XP_PER_LEVEL;
+      kmLevel++;
+      kmFloatingTexts.push({ x: targetPos.cx, y: targetPos.cy - 60, text: 'Lv.' + kmLevel + '!', alpha: 1 });
+    }
+    updateXPBar();
+    saveXPState();
+  }
+}
+
+function updateXPBar() {
+  const bar = document.getElementById("km-xp-bar");
+  const lvl = document.getElementById("km-xp-level");
+  if (bar) bar.style.width = (kmXP / (kmLevel * XP_PER_LEVEL) * 100) + "%";
+  if (lvl) lvl.textContent = kmLevel;
+}
+
+function saveXPState() {
+  if (!state.course) return;
+  localStorage.setItem("km_xp_" + state.course, JSON.stringify({ xp: kmXP, level: kmLevel }));
+}
+
+function loadXPState() {
+  if (!state.course) return;
+  try {
+    const data = JSON.parse(localStorage.getItem("km_xp_" + state.course));
+    if (data) { kmXP = data.xp || 0; kmLevel = data.level || 1; }
+  } catch(e) { kmXP = 0; kmLevel = 1; }
+  updateXPBar();
+}
+
+function updateCharPose() {
+  const node = kmNodeMap[kmChar.nodeId];
+  if (!node) { kmChar.pose = 'idle'; kmChar.frame = 0; return; }
+
+  switch (node.status) {
+    case '稳固': kmChar.pose = 'sitting'; kmChar.frame = 3; break;
+    case '卡住': kmChar.pose = 'confused'; kmChar.frame = 0; break;
+    case '不稳': kmChar.pose = 'idle'; kmChar.frame = 0; break;
+    default: kmChar.pose = 'idle'; kmChar.frame = 0;
+  }
+
+  // Check all nodes stable → celebrate
+  const allStable = Object.values(kmNodeMap).every(n => n.status === '稳固');
+  if (allStable) {
+    kmChar.pose = 'celebrating'; kmChar.frame = 2;
+    for (let i = 0; i < 16; i++) {
+      kmFloatingTexts.push({
+        x: kmChar.x + (Math.random()-0.5)*120,
+        y: kmChar.y - 15 - Math.random()*50,
+        text: ['★','✦','✧'][Math.floor(Math.random()*3)],
+        alpha: 1,
+      });
+    }
+  }
+}
+
+// ═══ Helper: roundedRect ═══
 function roundedRect(ctx, x, y, w, h, r) {
   ctx.beginPath();
   ctx.moveTo(x + r, y);
@@ -855,43 +1561,49 @@ function toggleKmSection(sectionId) {
   arrow.classList.toggle("open", isOpen);
 }
 
+// ═══ Fantasy info panel ═══
 function showNodeDetail(nodeId, cx, cy) {
-  const pos = kmNodePositions.find(p => p.node.node_id === nodeId);
-  if (!pos) return;
-  const n = pos.node;
+  const n = kmNodeMap[nodeId];
+  if (!n) return;
 
-  const statusText = { "稳固":"✅ 稳固", "不稳":"⚠️ 不稳", "卡住":"❌ 卡住", "未学":"⬜ 未学" };
+  const statusIcon = { '稳固': '⬤', '不稳': '◐', '卡住': '◍', '未学': '○' };
+  const statusText = { '稳固': '稳固', '不稳': '不稳', '卡住': '卡住', '未学': '未学' };
+  const statusColor = { '稳固': '#8ab88a', '不稳': '#d0b048', '卡住': '#e06060', '未学': '#888' };
+
   const depsIn = (n.depends_on||[]).map(d => {
-    const p = kmNodePositions.find(x => x.node.node_id === d);
-    return p ? `<span style="color:var(--link);cursor:pointer;text-decoration:underline;" onclick="event.stopPropagation();kmSelectedNode='${d}';showNodeDetail('${d}');kmRedraw&&kmRedraw();">${escHtml(p.node.name)}</span>` : d;
-  }).join(", ") || "无";
+    const dn = kmNodeMap[d];
+    return dn ? `<span style="color:#c8a868;cursor:pointer;text-decoration:underline;" onclick="event.stopPropagation();kmSelectedNode='${d}';showNodeDetail('${d}');">${escHtml(dn.name)}</span>` : d;
+  }).join(', ') || '无';
+
   const depsOut = (n.needed_by||[]).map(d => {
-    const p = kmNodePositions.find(x => x.node.node_id === d);
-    return p ? `<span style="color:var(--link);cursor:pointer;text-decoration:underline;" onclick="event.stopPropagation();kmSelectedNode='${d}';showNodeDetail('${d}');kmRedraw&&kmRedraw();">${escHtml(p.node.name)}</span>` : d;
-  }).join(", ") || "无";
+    const dn = kmNodeMap[d];
+    return dn ? `<span style="color:#c8a868;cursor:pointer;text-decoration:underline;" onclick="event.stopPropagation();kmSelectedNode='${d}';showNodeDetail('${d}');">${escHtml(dn.name)}</span>` : d;
+  }).join(', ') || '无';
 
   const detail = document.getElementById("km-detail");
   detail.innerHTML = `
-    <h4>${escHtml(n.name)} <span style="font-size:11px;color:var(--text-dim);">${n.node_id}</span></h4>
-    <div class="detail-row"><span class="dl">状态</span> ${statusText[n.status]||n.status}</div>
-    <div class="detail-row"><span class="dl">章节</span> ${escHtml(n.chapter||"未知")}</div>
-    <div class="detail-row"><span class="dl">前置依赖</span> ${depsIn}</div>
-    <div class="detail-row"><span class="dl">被依赖</span> ${depsOut}</div>
-    ${n.stuck_detail ? `<div class="detail-row"><span class="dl">卡住详情</span> ${escHtml(n.stuck_detail)}</div>` : ""}
-    ${n.lesson_plan ? `<div class="detail-row"><span class="dl">教案</span> ${escHtml(n.lesson_plan)}</div>` : ""}
+    <h4><span style="font-size:15px;margin-right:4px;">⭐</span>${escHtml(n.name)} <span style="font-size:10px;color:#8a7a5a;">${n.node_id}</span></h4>
+    <div class="detail-row"><span class="dl">章节</span> ${escHtml(n.chapter||'未知')} · <span style="color:${statusColor[n.status]||'#888'};">${statusIcon[n.status]||'○'} ${statusText[n.status]||n.status}</span></div>
+    <div class="detail-row"><span class="dl">前置</span> ${depsIn}</div>
+    <div class="detail-row"><span class="dl">后继</span> ${depsOut}</div>
+    ${n.stuck_detail ? `<div class="detail-row"><span class="dl">卡住原因</span> ${escHtml(n.stuck_detail)}</div>` : ''}
+    <div class="km-panel-actions">
+      <button class="km-panel-btn" onclick="alert('请在终端中上课以复习「${escHtml(n.name)}」')">📖 开始复习</button>
+      <button class="km-panel-btn" onclick="alert('教案: ${escHtml(n.lesson_plan||'暂无')}')">📜 看教案</button>
+    </div>
   `;
   detail.style.display = "block";
 
-  // 定位浮层
   const wrap = document.getElementById("km-canvas-wrap");
   const wrapRect = wrap.getBoundingClientRect();
-  let left = (cx || wrapRect.left + wrapRect.width / 3) - wrapRect.left;
-  let top = (cy || wrapRect.top + wrapRect.height / 3) - wrapRect.top;
-  left = Math.max(8, Math.min(left, wrapRect.width - 330));
-  top = Math.max(8, Math.min(top, wrapRect.height - 200));
+  let left = (cx || wrapRect.left + wrapRect.width/3) - wrapRect.left;
+  let top = (cy || wrapRect.top + wrapRect.height/3) - wrapRect.top;
+  left = Math.max(8, Math.min(left, wrapRect.width - 440));
+  top = Math.max(8, Math.min(top, wrapRect.height - 300));
   detail.style.left = left + "px";
   detail.style.top = top + "px";
 }
+
 
 // ═══════════════════════════════════════════════════════════
 //  进度
@@ -933,6 +1645,332 @@ function escHtml(s) {
   return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
 }
 
+function updateLessonInfoBar(stats) {
+  const elLesson = document.getElementById("li-lesson");
+  const elTime = document.getElementById("li-time");
+  const elStreak = document.getElementById("li-streak");
+  if (stats && stats.current_lesson > 0) {
+    elLesson.innerHTML = '第 <span class="li-num">' + stats.current_lesson + '</span> 节课';
+    elTime.textContent = stats.current_time || "";
+    if (stats.streak > 0) {
+      elStreak.innerHTML = '连续 <span class="li-num">' + stats.streak + '</span> 天';
+    } else {
+      elStreak.textContent = "";
+    }
+  } else {
+    elLesson.textContent = "尚未选课";
+    elTime.textContent = "";
+    elStreak.textContent = "";
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+//  知识地图工具栏
+// ═══════════════════════════════════════════════════════════
+
+function resetKmView() {
+  kmPanX = 0; kmPanY = 0;
+  kmZoom = 1;
+  kmSelectedNode = null;
+  document.getElementById("km-detail").style.display = "none";
+  document.getElementById("km-search-results").style.display = "none";
+  if (kmRedraw) kmRedraw();
+}
+
+function toggleHighlightMode() {
+  kmHighlightMode = !kmHighlightMode;
+  const btn = document.getElementById("km-btn-highlight");
+  if (kmHighlightMode) {
+    btn.classList.add("active");
+    btn.textContent = "🔗 高亮: 开";
+  } else {
+    btn.classList.remove("active");
+    btn.textContent = "🔗 高亮依赖";
+  }
+  if (kmRedraw) kmRedraw();
+}
+
+function onSearchNodes() {
+  const input = document.getElementById("km-search");
+  const results = document.getElementById("km-search-results");
+  const q = input.value.trim().toLowerCase();
+
+  if (!q || q.length === 0) {
+    results.style.display = "none";
+    return;
+  }
+
+  const matches = [];
+  for (const pos of kmNodePositions) {
+    const n = pos.node;
+    const name = n.name.toLowerCase();
+    const nid = n.node_id.toLowerCase();
+    if (name.includes(q) || nid.includes(q)) {
+      matches.push(pos);
+    }
+  }
+
+  if (matches.length === 0) {
+    results.innerHTML = '<div class="sr-item" style="color:var(--text-dim);">无匹配节点</div>';
+    results.style.display = "block";
+    return;
+  }
+
+  results.innerHTML = matches.slice(0, 10).map(pos => {
+    const n = pos.node;
+    const statusCls = { "稳固":"status-stable","不稳":"status-unstable","卡住":"status-stuck" }[n.status]||"status-unlearned";
+    return `<div class="sr-item" onclick="focusNode('${n.node_id}')">
+      <span class="status-dot ${statusCls}" style="display:inline-block;vertical-align:middle;margin-right:6px;"></span>
+      <span>${escHtml(n.name)}</span>
+      <span style="color:var(--text-dim);font-size:10px;margin-left:6px;">${n.node_id}</span>
+    </div>`;
+  }).join("");
+
+  results.style.display = "block";
+  // 点击其他地方关闭
+  setTimeout(() => {
+    document.addEventListener("click", function closeSearch(e) {
+      if (!results.contains(e.target) && e.target !== input) {
+        results.style.display = "none";
+        document.removeEventListener("click", closeSearch);
+      }
+    }, { once: true });
+  }, 100);
+}
+
+function focusNode(nodeId) {
+  const pos = kmNodePositions.find(p => p.node.node_id === nodeId);
+  if (!pos) return;
+
+  // 计算需要平移到的位置（使节点居中）
+  const wrap = document.getElementById("km-canvas-wrap");
+  const wrapW = wrap.clientWidth;
+  const wrapH = wrap.clientHeight;
+
+  kmZoom = 1.5;
+  kmPanX = -(pos.cx * kmZoom - wrapW / 2);
+  kmPanY = -(pos.cy * kmZoom - wrapH / 2);
+
+  kmSelectedNode = nodeId;
+  document.getElementById("km-search-results").style.display = "none";
+  document.getElementById("km-search").value = "";
+  if (kmRedraw) kmRedraw();
+  showNodeDetailAtPos(nodeId, pos);
+}
+
+function showNodeDetailAtPos(nodeId, pos) {
+  const wrap = document.getElementById("km-canvas-wrap");
+  const wrapRect = wrap.getBoundingClientRect();
+  const screenX = wrapRect.left + (pos.cx * kmZoom + kmPanX);
+  const screenY = wrapRect.top + (pos.cy * kmZoom + kmPanY);
+  showNodeDetail(nodeId, screenX, screenY + 30);
+}
+
+// ═══════════════════════════════════════════════════════════
+//  统计视图
+// ═══════════════════════════════════════════════════════════
+
+async function renderStats() {
+  document.getElementById("st-course-name").textContent = state.courseName || "点击选择";
+  if (!state.course) {
+    document.getElementById("st-empty").style.display = "block";
+    document.getElementById("st-data").style.display = "none";
+    return;
+  }
+
+  let data;
+  try {
+    data = await api(`/api/stats?course=${state.course}`);
+  } catch(e) {
+    document.getElementById("st-empty").style.display = "block";
+    document.getElementById("st-data").style.display = "none";
+    return;
+  }
+
+  const isEmpty = (!data.study_dates || data.study_dates.length === 0)
+                && data.total_concepts === 0
+                && (!data.hardest_concepts || data.hardest_concepts.length === 0);
+  if (isEmpty) {
+    document.getElementById("st-empty").style.display = "block";
+    document.getElementById("st-data").style.display = "none";
+    return;
+  }
+
+  document.getElementById("st-empty").style.display = "none";
+  document.getElementById("st-data").style.display = "block";
+
+  // ── 课次信息 ──
+  const liDiv = document.getElementById("st-lesson-info");
+  if (data.current_lesson > 0) {
+    liDiv.innerHTML = '<span>第 <b style="color:var(--accent);font-size:16px;">' + data.current_lesson + '</b> 节课</span>'
+      + '<span style="color:var(--border);">|</span>'
+      + '<span>' + (data.current_time || "") + '</span>'
+      + '<span style="color:var(--border);">|</span>'
+      + '<span>共 ' + data.study_dates.length + ' 天有学习记录</span>';
+  } else {
+    liDiv.innerHTML = "";
+  }
+
+  // ── 连续天数 ──
+  const sw = document.getElementById("st-streak-wrap");
+  if (data.streak > 0) {
+    sw.innerHTML = `<div class="streak-badge"><span class="streak-num">${data.streak}</span><span class="streak-label">天连续学习</span></div>`;
+  } else if (data.study_dates.length > 0) {
+    sw.innerHTML = `<div style="color:var(--text-dim);font-size:13px;">共 ${data.study_dates.length} 天有过学习记录</div>`;
+  } else {
+    sw.innerHTML = "";
+  }
+
+  // ── 热力图 ──
+  renderHeatmap(data.study_dates);
+
+  // ── 环形图 ──
+  renderDonut(data.concept_stats, data.total_concepts);
+
+  // ── 最难概念 ──
+  renderHardest(data.hardest_concepts);
+}
+
+function renderHeatmap(dates) {
+  const wrap = document.getElementById("st-calendar-wrap");
+  if (!dates || dates.length === 0) {
+    wrap.innerHTML = "";
+    return;
+  }
+
+  const dateSet = new Set(dates);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  // 从 12 周前的周一开始
+  const start = new Date(today);
+  start.setDate(start.getDate() - 84); // 12 weeks ago
+  const dayOfWeek = start.getDay();
+  const mondayOffset = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
+  start.setDate(start.getDate() + mondayOffset);
+
+  const weeks = 12;
+  const days = 7; // Mon-Sun
+  const months = ["1月","2月","3月","4月","5月","6月","7月","8月","9月","10月","11月","12月"];
+  const dayLabels = ["一","二","三","四","五","六","日"];
+
+  let html = '<table cellspacing="0">';
+
+  // 月份行
+  html += '<tr class="cal-month-row"><td></td>';
+  let lastMonth = -1;
+  for (let w = 0; w < weeks; w++) {
+    const d = new Date(start);
+    d.setDate(d.getDate() + w * 7);
+    const m = d.getMonth();
+    if (m !== lastMonth) {
+      html += `<td colspan="1">${months[m]}</td>`;
+      lastMonth = m;
+    } else {
+      html += '<td></td>';
+    }
+  }
+  html += '</tr>';
+
+  // 每天行
+  for (let d = 0; d < days; d++) {
+    html += `<tr><td class="cal-day-label">${dayLabels[d]}</td>`;
+    for (let w = 0; w < weeks; w++) {
+      const cur = new Date(start);
+      cur.setDate(cur.getDate() + w * 7 + d);
+      const dateStr = cur.toISOString().slice(0, 10);
+
+      if (cur > today) {
+        html += '<td class="cal-cell cal-l0"></td>';
+      } else if (dateSet.has(dateStr)) {
+        html += '<td class="cal-cell cal-l3" title="' + dateStr + '"></td>';
+      } else {
+        html += '<td class="cal-cell cal-l0"></td>';
+      }
+    }
+    html += '</tr>';
+  }
+
+  html += '</table>';
+  wrap.innerHTML = html;
+}
+
+function renderDonut(stats, total) {
+  const wrap = document.getElementById("st-donut-wrap");
+  if (total === 0) {
+    wrap.innerHTML = '<div style="color:var(--text-dim);text-align:center;padding:20px;">暂无概念数据</div>';
+    return;
+  }
+
+  const r = 70;
+  const cx = 80, cy = 80;
+  const circumference = 2 * Math.PI * r;
+
+  const segments = [
+    { label: "稳固", value: stats.stable, color: "var(--status-stable)" },
+    { label: "不稳", value: stats.unstable, color: "var(--status-unstable)" },
+    { label: "卡住", value: stats.stuck, color: "var(--status-stuck)" },
+    { label: "未学", value: stats.unlearned, color: "#555560" },
+  ];
+
+  // 计算 SVG arc 路径
+  let offset = -Math.PI / 2; // start from top
+  let paths = "";
+  for (const seg of segments) {
+    if (seg.value === 0) continue;
+    const fraction = seg.value / total;
+    const angle = fraction * 2 * Math.PI;
+    const x1 = cx + r * Math.cos(offset);
+    const y1 = cy + r * Math.sin(offset);
+    const x2 = cx + r * Math.cos(offset + angle);
+    const y2 = cy + r * Math.sin(offset + angle);
+    const largeArc = fraction > 0.5 ? 1 : 0;
+    paths += `<path d="M ${x1} ${y1} A ${r} ${r} 0 ${largeArc} 1 ${x2} ${y2}" fill="none" stroke="${seg.color}" stroke-width="20" stroke-linecap="butt"/>`;
+    offset += angle;
+  }
+
+  let svg = `<svg width="160" height="160" viewBox="0 0 160 160">`;
+  svg += paths;
+  svg += `<text x="80" y="75" text-anchor="middle" fill="var(--text-bright)" font-size="28" font-weight="bold">${total}</text>`;
+  svg += `<text x="80" y="95" text-anchor="middle" fill="var(--text-dim)" font-size="11">总概念</text>`;
+  svg += `</svg>`;
+
+  let legend = '<div class="donut-legend">';
+  for (const seg of segments) {
+    legend += `<div class="donut-item"><span class="donut-dot" style="background:${seg.color};"></span>${seg.label} ${seg.value}</div>`;
+  }
+  legend += '</div>';
+
+  wrap.innerHTML = svg + legend;
+}
+
+function renderHardest(items) {
+  const wrap = document.getElementById("st-hardest-wrap");
+  if (!items || items.length === 0) {
+    wrap.innerHTML = "";
+    return;
+  }
+
+  let html = "<h4>⚠️ 需要关注的概念</h4>";
+  items.forEach((item, i) => {
+    const statusClass = item.status === "卡住" ? "stuck" : "unstable";
+    const statusText = item.status;
+    let meta = "";
+    if (item.review_rounds > 0) meta += `复习 ${item.review_rounds} 轮`;
+    if (item.impact > 0) {
+      if (meta) meta += " · ";
+      meta += `影响 ${item.impact} 个后继`;
+    }
+    html += `<div class="hard-item">
+      <span class="hard-rank">${i + 1}</span>
+      <span class="hard-name">${escHtml(item.name)}</span>
+      <span class="hard-status ${statusClass}">${statusText}</span>
+      <span class="hard-meta">${meta}</span>
+    </div>`;
+  });
+  wrap.innerHTML = html;
+}
+
 // ═══════════════════════════════════════════════════════════
 //  键盘
 // ═══════════════════════════════════════════════════════════
@@ -948,17 +1986,44 @@ document.addEventListener("keydown", function(e) {
 // ═══════════════════════════════════════════════════════════
 
 async function init() {
+  const statusEl = document.getElementById("cbar-course-name");
+  const log = function(s) { if (statusEl) statusEl.textContent = s; };
+  log("\u{1F504} step1...");
+  // 10 秒后如果还没完成，显示错误
+  const fallbackTimer = setTimeout(() => {
+    if (!_initDone && !_initError) {
+      _initError = "连接超时：服务器可能未启动或端口不是 8765。";
+      updateCourseBar();
+    }
+  }, 10000);
   try {
+    log("\u{1F504} step2: calling api...");
     const data = await api("/api/init");
+    log("\u{1F504} step3: got response");
     courses = data.courses||{};
+    _initDone = true;
+    clearTimeout(fallbackTimer);
+    // 自动选中第一个有知识地图的课程，否则选第一个
+    if (!state.course) {
+      const ids = Object.keys(courses);
+      const kmFirst = ids.find(id => courses[id].has_km);
+      const autoId = kmFirst || ids[0];
+      if (autoId && courses[autoId]) {
+        state.course = autoId;
+        state.courseName = courses[autoId].name;
+      }
+    }
     updateCourseBar();
     switchTab("knowledge");
     updateFcCourseLabel();
   } catch(err) {
+    clearTimeout(fallbackTimer);
+    _initError = "无法连接到服务器：" + (err.message || err);
     document.getElementById("km-content").innerHTML =
       '<div style="color:#d08080;padding:40px;text-align:center;">'
-      +'<p>无法连接到服务器。</p>'
-      +'<p style="font-size:13px;color:var(--text-dim);">请确认 knowledge_panel.py 正在运行。</p></div>';
+      +'<p>无法连接到服务器</p>'
+      +'<p style="font-size:13px;color:var(--text-dim);">' + (err.message || err) + '</p>'
+      +'<p style="font-size:13px;color:var(--text-dim);">请确认 knowledge_panel.py 正在运行，端口 8765</p></div>';
   }
 }
 init();
