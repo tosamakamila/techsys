@@ -806,3 +806,5 @@ scripts/
 - log.md 规范收紧：只记系统/架构变更，不记教学进度（用户要求）
 - 引导法则硬编码：运行前自检门（4项）+ 负向词汇表（`是不是` `对不对` `一样吗` 等9词）+ 50字禁令（结论前不得超50字解释）+ 强制三步法（过程对比）+ 承接桥梁公式（回顾→矛盾→新提问）。更新 CLAUDE.md + system_detail.md（用户提供完整方案设计）
 - 教学洞察格式：散文化列表→结构化表格（推理断层点/交互特征/策略有效性），禁止小说式输出。teaching_insights 写入新增子代理C并行执行
+
+- 目录重组：course_inbox→courses/，characters→teacher/，card+scripts→function/；同步更新全部路径引用（CLAUDE.md、README、teacher/、scripts/ 内 docstring+ROOT+PROJECT_ROOT）（扁平化目录结构）

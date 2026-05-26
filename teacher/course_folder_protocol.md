@@ -11,7 +11,7 @@
 - `learner_profile.md`：本课程的学习者画像（每课必读）
 - `reading_plan.md`：分片计划（仅推进新片段时读）
 - `materials/`：原始教材
-- `transformed/`：单课教案
+- `transformed/`：已弃用。教材即教案，教师直接按 `materials/` 原文推进，不再生成二次加工教案
 - `notes/`：用户笔记
 - `book_revision_notes.md`：教材修订记录
 

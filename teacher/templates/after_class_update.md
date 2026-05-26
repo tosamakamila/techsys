@@ -25,18 +25,12 @@
 course_type: 新课/复习课
 fragment: L002a
 fragment_topic: 主题名
-lesson_plan: transformed/xxx.md
 source: materials/xxx.md
 
 covered:
   - 本堂课已处理的概念
 
-interrupted_at: 中断位置（如未中断则写"完成"）
-
-excluded:
-  - 不处理的概念
-
-done_condition: 下课条件
+interrupted_at: 中断位置（如未中断则写"完成"；教材直讲模式下记录章节名或行号）
 
 tags: [标签1, 标签2]
 
@@ -55,7 +49,7 @@ entry_line: |
 ```
 
 - 中断→写清中断位置；完成→`interrupted_at: 完成`
-- `entry_line` 写成灵的课堂开场白
+- `entry_line` 写成领航者的课堂开场白
 - **conclusions 截断规则**：保留最近 3 节课的结论，更早的只保留标注 ? / 需巩固 / 待巩固的条目（仍不稳标记），其余删除。避免结论无限积累
 
 ### 3b. lesson_entry.yaml（下次上课入口）
@@ -74,7 +68,7 @@ entry_line: |
 ### 4. reading_plan.md（脚本执行）
 
 ```bash
-python scripts/after_class.py courses/<课程名> --fragment <片段ID> --status 已上课 --next <下一片段>
+python function/scripts/after_class.py courses/<课程名> --fragment <片段ID> --status 已上课 --next <下一片段>
 ```
 
 - 标记需复习：`--status 需复习`（不传 `--next`）

@@ -16,7 +16,7 @@ courses/<课程名>/
 ├── knowledge_map.md           ← 知识地图骨架（手动定义）
 ├── knowledge_map_state.json   ← 知识地图状态（脚本自动更新）
 ├── materials/                 ← 原始教材
-├── transformed/               ← 生成的教案
+├── transformed/               ← 已弃用（教材即教案，直接按 materials/ 原文推进）
 └── notes/                     ← 课堂笔记
 ```
 
@@ -31,4 +31,4 @@ courses/<课程名>/
 
 ## 上课机制
 
-课程文件通过 `map.py --preload` 打包到 `scripts/_preload.json`，AI 一次读取直接开场。详见根目录 `CLAUDE.md` 和 `README.md`。
+课程文件通过 `map.py --preload` 打包到 `function/scripts/state/_preload.json`，AI 一次读取直接开场。详见根目录 `CLAUDE.md` 和 `README.md`。
