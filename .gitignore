@@ -4,9 +4,10 @@ responseto问题箱.md
 todo.md
 
 # 运行时状态文件（scripts/state/ 目录）
-scripts/current_scene.json
-scripts/state/
-scripts/conversation.json
+function/scripts/state/
+
+# 闪卡复习状态
+function/card/*/review_state.json
 
 # Python
 __pycache__/

@@ -44,6 +44,7 @@ def _advance_reading(course_dir: Path, fragment: str, status: str,
     new_lines = []
     updated_table = False
     updated_position = False
+    updated_lesson_count = False
     changes = 0
 
     for i, line in enumerate(lines):
@@ -67,6 +68,16 @@ def _advance_reading(course_dir: Path, fragment: str, status: str,
                 print(f"  reading_plan: 下一个片段 → {next_fragment}")
                 continue
 
+        if not review and status == "已上课" and not updated_lesson_count:
+            m = re.match(r"^- 已完成课时：(\d+)", line.strip())
+            if m:
+                count = int(m.group(1)) + 1
+                new_lines.append(f"- 已完成课时：{count}")
+                updated_lesson_count = True
+                changes += 1
+                print(f"  reading_plan: 已完成课时 → {count}")
+                continue
+
         new_lines.append(line)
 
         if tag and line.strip().startswith("## 已完成标签"):
@@ -77,6 +88,19 @@ def _advance_reading(course_dir: Path, fragment: str, status: str,
     if not updated_table:
         print(f"  警告：未在表格中找到片段 {fragment}")
         return changes
+
+    # 首次使用：已完成课时行不存在则新增
+    if not review and status == "已上课" and not updated_lesson_count:
+        inserted = False
+        for i in range(len(new_lines) - 1, -1, -1):
+            if new_lines[i].strip().startswith("- 前置依赖：") or new_lines[i].strip().startswith("- 下一个片段："):
+                new_lines.insert(i + 1, "- 已完成课时：1")
+                inserted = True
+                break
+        if not inserted:
+            new_lines.append("- 已完成课时：1")
+        changes += 1
+        print(f"  reading_plan: 已完成课时 → 1（新增）")
 
     rp_path.write_text("\n".join(new_lines), encoding="utf-8")
     return changes

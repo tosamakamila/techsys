@@ -808,3 +808,15 @@ scripts/
 - 教学洞察格式：散文化列表→结构化表格（推理断层点/交互特征/策略有效性），禁止小说式输出。teaching_insights 写入新增子代理C并行执行
 
 - 目录重组：course_inbox→courses/，characters→teacher/，card+scripts→function/；同步更新全部路径引用（CLAUDE.md、README、teacher/、scripts/ 内 docstring+ROOT+PROJECT_ROOT）（扁平化目录结构）
+
+## 2026-05-26：数据流精简——单源化+去冗余层+分层加载
+
+- `map_state.json` 新增 `last_scene` 字段，version→2。`teacher` 默认值从 `"ling"` 改为 `None`（不再硬编码默认角色）
+- 删除 `write_scene_file()`（`_shared.py`）——`current_scene.json` 不再写入，scene 直存 map_state.json
+- `map_daemon.py`：「放学」时清空 teacher/course/classmate/scene。启动时不再清理临时文件。scene 动作不再调用 write_scene_file
+- `map.py`：删除 `_preload.json` 写入和 `current_scene.json` 删除逻辑。「上课」不再依赖这两个中转文件
+- CLAUDE.md：路由表「上课」改为 pro 直读 map_state.json（无 daemon、无 map.py、无 _preload.json）。删除 `_preload.json` 就绪路径。步骤 1 改为分层加载：开场只读必需文件，教材分段读，learner_profile 按需读，progress/teaching_insights 仅下课使用
+- 理由：消除三个文件存同一套数据的冗余路径，数据流归一为 map_state.json 单源，课前思考链大幅缩短
+- 课时计数迁至 reading_plan.md：`after_class.py` 的 `_advance_reading` 在每次非 review 已上课后自增 `已完成课时` 行。开场取课次不再依赖 progress.md
+- 角色卡拆分：xia 的 profile.yaml（性格+说话方式）+ scenes/{study,chat,review}.yaml。`scan_characters` 优先读 profile.yaml，回退旧命名。CLAUDE.md 步骤 1 改为读 profile.yaml + scenes/{scene}.yaml
+- 执行纪律靠文件边界：pro 不能多读——scene 文件物理隔离，不存在的内容读不到

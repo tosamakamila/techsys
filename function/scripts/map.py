@@ -20,7 +20,6 @@ import argparse
 import subprocess
 import socket
 from pathlib import Path
-from datetime import datetime
 
 if sys.platform == "win32":
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
@@ -30,7 +29,7 @@ ROOT = SCRIPT_DIR.parent.parent
 
 from _shared import (
     LOCATIONS, AppState,
-    load_state, save_state, validate_state, write_scene_file,
+    load_state, save_state, validate_state,
     action_available, scan_characters, scan_courses,
 )
 
@@ -39,7 +38,7 @@ from _shared import (
 
 def start_server(port: int = 8765):
     """启动知识地图面板子进程。返回 (proc, url)。"""
-    server_script = SCRIPT_DIR / "knowledge_panel.py"
+    server_script = ROOT / "web" / "knowledge_panel.py"
 
     max_tries = 5
     actual_port = port
@@ -146,13 +145,9 @@ def go_quick(args, characters: dict, courses: dict):
 
     if args.stdout:
         save_state(state)
-        scene_data["timestamp"] = datetime.now().timestamp()
-        preload_path = SCRIPT_DIR / "state" / "_preload.json"
-        preload_path.write_text(json.dumps(scene_data, ensure_ascii=False), encoding="utf-8")
         print(json.dumps(scene_data, ensure_ascii=False))
         sys.exit(0)
 
-    write_scene_file(scene_action["scene_id"], state, characters, courses)
     save_state(state)
 
     print(f"\n  快速续课...")
@@ -192,10 +187,6 @@ def main():
             print(f"知识地图面板: {url}")
         except (OSError, RuntimeError) as e:
             print(f"无法启动面板: {e}", file=sys.stderr)
-
-    scene_path = SCRIPT_DIR / "current_scene.json"
-    if scene_path.exists():
-        scene_path.unlink()
 
     if args.go:
         go_quick(args, characters, courses)

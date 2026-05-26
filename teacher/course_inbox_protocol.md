@@ -17,7 +17,7 @@
 3. 更新 `course.md`：名称、别名、教材来源、课程状态
 4. 初始化 `progress.md` 和 `lesson_state.yaml`
 5. 若教材 >1-2 万字→初始化 `reading_plan.md`（识别目录→建分片计划→设首个片段）
-6. 询问：先按 `textbook_transform.md` 生成教案，还是直接开始诊断式上课？
+6. 询问：直接开始诊断式上课，还是先预览一下教材结构？
 
 ## 课后更新
 

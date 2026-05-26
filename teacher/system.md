@@ -17,10 +17,10 @@
 | `teacher/classroom.md` | 描写节奏+发言互动（map.py 加载） | study/review 场景 |
 | `teacher/templates/` | 课后更新、教材改写等模板 | 课后更新或教材改写时 |
 | `teacher/templates/review_lesson.md` | 复习协议（三段式循环+简化下课） | `review` 场景 |
-| `teacher/templates/library_chat.md` | 图书馆聊天场景指南（直觉型伙伴） | `chat` 场景 |
-| `teacher/characters/<角色>/<角色>.yaml` | 角色卡（领航者/直觉型伙伴均 YAML化，scenes 字段定义场景片段） | 按 scene 选取对应 section |
-| `teacher/characters/<角色>/character_backstory.yaml` | 角色背景故事 | 首次见面/用户询问 |
+| `teacher/characters/xia/library_chat.md` | 图书馆聊天场景指南（夏） | `chat` 场景 |
+| `teacher/characters/<角色>/profile.yaml` | 角色卡（领航者/直觉型伙伴均 YAML化） | 按 scene 选取 |
+| `teacher/characters/<角色>/scenes/{study,review,chat}.yaml` | 场景行为定义 | 按 scene 选取 |
 | `function/scripts/map.py` | 终端交互式地图 | 用户说"上学"或上课触发词时 |
-| `function/scripts/knowledge_panel.py` | 知识地图可视化面板 | 手动启动 |
+| `web/knowledge_panel.py` | 知识地图可视化面板 | 手动启动 |
 | `function/scripts/_shared.py` | 脚本共享函数 | 各脚本内部引用 |
 | `courses/<课程名>/` | 课程教材、进度、状态 | 选定课程后 |

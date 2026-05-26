@@ -37,7 +37,6 @@ sugeladi/
 │   │   ├── _shared.py         共享函数（状态管理 + LOCATIONS + 角色/课程扫描）
 │   │   ├── map.py             CLI 快捷入口（--go --preload --stdout + --server）
 │   │   ├── map_daemon.py      终端常驻导航菜单（零 token）
-│   │   ├── knowledge_panel.py      知识地图可视化面板（HTTP 服务器）
 │   │   ├── build_knowledge_map.py      从 .md 生成 knowledge_map_state.json
 │   │   ├── scaffold_knowledge_map.py   从课程文件逆向生成 knowledge_map.md
 │   │   ├── recommend_node.py           薄弱节点推荐
@@ -46,10 +45,15 @@ sugeladi/
 │   │   ├── state/             运行时状态目录
 │   │   │   ├── _preload.json  预加载缓存（map.py --preload 写入）
 │   │   │   └── map_state.json 地图记忆
-│   │   ├── templates/
-│   │   │   └── index.html     knowledge_panel 前端页面
 │   │   └── current_scene.json 场景交接信号（daemon 写 → AI 读 → AI 删）
 │   └── card/               闪卡
+├── web/                    Web 面板
+│   ├── knowledge_panel.py      知识地图可视化面板（HTTP 服务器）
+│   ├── chat_panel.py           群聊面板
+│   └── templates/              前端页面 + 静态资源
+│       ├── index.html          knowledge_panel 前端
+│       ├── chat.html           群聊面板前端
+│       └── assets/             图片/头像/地图素材
 │
 ├── courses/               ← 具体课程
 │   ├── _template/         课程模板（新建课程时复制）
@@ -124,7 +128,7 @@ sugeladi/
 |------|------|
 | `function/scripts/map.py` | CLI 快捷入口：`--go --preload --stdout` 续课，`--server` 启动知识面板。首次使用支持参数自动创建状态 |
 | `function/scripts/map_daemon.py` | 终端常驻导航菜单（纯 input+print），零 token。选老师/课程/场景 |
-| `function/scripts/knowledge_panel.py` | HTTP 服务器（127.0.0.1），浏览器可视化：知识地图 Canvas + 闪卡复习 + 课程进度 |
+| `web/knowledge_panel.py` | HTTP 服务器（127.0.0.1），浏览器可视化：知识地图 Canvas + 闪卡复习 + 课程进度 |
 | `function/scripts/build_knowledge_map.py` | 从 knowledge_map.md 生成 knowledge_map_state.json 骨架 |
 | `function/scripts/scaffold_knowledge_map.py` | 从课程文件逆向生成 knowledge_map.md 草稿 |
 | `function/scripts/recommend_node.py` | 找出薄弱节点，按影响面排序推荐 |

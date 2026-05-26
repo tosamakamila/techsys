@@ -688,12 +688,12 @@ body::before {
 #fc-card::after {
   content: '';
   position: absolute;
-  right: 22px;
-  bottom: 18px;
-  width: 86px;
-  height: 86px;
+  right: 14px;
+  bottom: 10px;
+  width: 38px;
+  height: 38px;
   background: url('/assets/罗盘玫瑰.png') center / contain no-repeat;
-  opacity: 0.16;
+  opacity: 0.08;
   pointer-events: none;
 }
 
@@ -1132,7 +1132,9 @@ async function startFlashcard() {
 
 function showFcCard(card, prog) {
   document.getElementById("fc-question").textContent = card.question;
+  document.getElementById("fc-answer").textContent = "";
   document.getElementById("fc-answer").style.display="none";
+  document.getElementById("fc-explanation").textContent = "";
   document.getElementById("fc-explanation").style.display="none";
   document.getElementById("fc-buttons").style.display="block";
   document.getElementById("fc-rating-buttons").style.display="none";

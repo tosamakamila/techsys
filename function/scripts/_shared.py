@@ -1,7 +1,7 @@
 """
 _shared.py —— 脚本共享模块
 
-提供 map.py、knowledge_panel.py、recommend_node.py、after_class.py 共用的函数。
+提供 map.py、web/knowledge_panel.py、recommend_node.py、after_class.py 共用的函数。
 """
 import re
 import json
@@ -16,7 +16,7 @@ SCRIPTS_DIR = Path(__file__).resolve().parent
 LOCATIONS = {
     "gate": {
         "name": "校门口",
-        "flavor": "灵在自习室，夏在图书馆",
+        "flavor": "灵在自习室，夏在图书馆，柠在家里",
         "desc": "",
         "actions": [
             {"key": "1", "label": "进去", "type": "navigate", "target": "classroom_door"},
@@ -24,12 +24,13 @@ LOCATIONS = {
     },
     "classroom_door": {
         "name": "走廊",
-        "flavor": "三扇门：教室、自习室、图书馆",
+        "flavor": "教室、自习室、图书馆——还有一扇门通往柠家",
         "desc": "",
         "actions": [
             {"key": "1", "label": "去教室（三人）", "type": "navigate", "target": "classroom"},
             {"key": "2", "label": "去自习室（找灵）", "type": "navigate", "target": "study_room"},
             {"key": "3", "label": "去图书馆（找夏）", "type": "navigate", "target": "library"},
+            {"key": "4", "label": "去柠家（找柠）", "type": "navigate", "target": "home"},
         ],
     },
     "classroom": {
@@ -68,6 +69,18 @@ LOCATIONS = {
              "needs_course": True, "teacher": "xia"},
         ],
     },
+    "home": {
+        "name": "柠家",
+        "flavor": "门虚掩着，里面传来笔尖戳纸的声音和一句压低了但还是很明显的'哈！'",
+        "desc": "和柠双人共学",
+        "actions": [
+            {"key": "1", "label": "选课程", "type": "select_course"},
+            {"key": "2", "label": "开始共学", "type": "scene", "scene_id": "study",
+             "needs_course": True, "teacher": "ning"},
+            {"key": "3", "label": "开始复习", "type": "scene", "scene_id": "review",
+             "needs_course": True, "teacher": "ning"},
+        ],
+    },
 }
 
 NO_BACK_LOCATIONS = {"gate"}
@@ -78,9 +91,10 @@ class AppState:
     """运行时状态，在内存中维护。"""
     def __init__(self):
         self.location = "gate"
-        self.teacher = "ling"     # 默认伙伴（灵），导航时自动写入
+        self.teacher = None       # 无默认值，必须通过菜单选择
         self.course = None        # course id
-        self.classmate = None      # str: "ning" / "xia+ning" / "all" / None
+        self.classmate = None     # str: "ning" / "xia+ning" / "all" / None
+        self.scene = None         # 由 scene 动作写入
         self.location_stack = []  # 面包屑导航
 
 
@@ -98,10 +112,11 @@ def load_state(no_state: bool = False, full: bool = False):
         data = json.loads(state_path.read_text(encoding="utf-8"))
         state.location = data.get("last_location", "gate")
         if full:
-            state.teacher = data.get("last_teacher") or "ling"
+            state.teacher = data.get("last_teacher") or None
             state.course = data.get("last_course")
             cm = data.get("last_classmate", None)
-            state.classmate = cm if cm else None  # 兼容旧 True/False → None
+            state.classmate = cm if cm else None
+            state.scene = data.get("last_scene")
     except (json.JSONDecodeError, KeyError):
         pass
 
@@ -115,7 +130,8 @@ def save_state(state: AppState):
         "last_teacher": state.teacher,
         "last_course": state.course,
         "last_classmate": state.classmate,
-        "version": 1,
+        "last_scene": state.scene,
+        "version": 2,
     }
     state_path = SCRIPTS_DIR / "state" / "map_state.json"
     state_path.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
@@ -129,33 +145,6 @@ def validate_state(state: AppState, characters: dict):
         if state.teacher is None and len(characters) > 0:
             if state.location != "library":
                 state.location = "gate"
-
-
-def write_scene_file(scene_id: str, state: AppState, characters: dict, courses: dict):
-    """写入 current_scene.json，供 AI 读取启动教学场景。"""
-    teacher_name = ""
-    if state.teacher and state.teacher in characters:
-        teacher_name = characters[state.teacher]["name"]
-
-    course_name = ""
-    if state.course:
-        if state.course in courses:
-            course_name = courses[state.course]["name"]
-        else:
-            course_name = state.course
-
-    data = {
-        "scene": scene_id,
-        "teacher": state.teacher,
-        "teacher_name": teacher_name,
-        "course": state.course,
-        "course_name": course_name,
-        "classmate": state.classmate,
-        "timestamp": datetime.now().isoformat(),
-    }
-
-    scene_path = SCRIPTS_DIR / "current_scene.json"
-    scene_path.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
 
 
 def action_available(action: dict, state: AppState, courses: dict):
@@ -186,8 +175,10 @@ def scan_characters():
         if not folder.is_dir() or folder.name.startswith("_"):
             continue
 
-        # 优先 yaml，回退 md
-        yaml_file = folder / f"{folder.name}.yaml"
+        # 优先 profile.yaml，回退 {name}.yaml，再回退 {name}.md
+        yaml_file = folder / "profile.yaml"
+        if not yaml_file.exists():
+            yaml_file = folder / f"{folder.name}.yaml"
         md_file = folder / f"{folder.name}.md"
         content = ""
         name = folder.name

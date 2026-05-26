@@ -9,9 +9,9 @@ knowledge_panel.py —— 知识地图可视化面板
 地图导航和教学对话由终端 map.py + Claude Code 完成，本网站作为知识和进度的可视化仪表盘。
 
 用法：
-    python function/scripts/knowledge_panel.py
-    python function/scripts/knowledge_panel.py --port 8765
-    python function/scripts/knowledge_panel.py --no-browser
+    python web/knowledge_panel.py
+    python web/knowledge_panel.py --port 8765
+    python web/knowledge_panel.py --no-browser
 """
 
 import os
@@ -27,7 +27,8 @@ from datetime import datetime, date, timedelta
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from urllib.parse import urlparse, parse_qs as _stdlib_parse_qs, unquote
 
-PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(PROJECT_ROOT / "function" / "scripts"))
 
 if sys.platform == "win32":
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
@@ -95,7 +96,7 @@ def _cleanup_stale_sessions():
 
 
 def parse_cards(course_id):
-    """解析 cards.md，返回卡片列表。"""
+    """解析 cards.md，返回卡片列表。格式与 review.py parse_cards 一致。"""
     cards_path = PROJECT_ROOT / "function" / "card" / course_id / "cards.md"
     if not cards_path.exists():
         return []
@@ -106,18 +107,37 @@ def parse_cards(course_id):
         block = block.strip()
         if not block:
             continue
-        qm = re.search(r"##\s+问题\s*\n(.+)", block)
-        cm = re.search(r"- category:\s*(.+)", block)
-        am = re.search(r"- answer:\s*(.+?)(?:\n|$)", block)
-        em = re.search(r"- explanation:\s*(.+?)(?:\n|$)", block)
-        if qm:
-            cards.append({
-                "id": qm.group(1).strip()[:60],
-                "question": qm.group(1).strip(),
-                "category": cm.group(1).strip() if cm else "",
-                "answer": am.group(1).strip() if am else "",
-                "explanation": em.group(1).strip() if em else "",
-            })
+        lines = block.split("\n")
+        if not lines or not lines[0].startswith("## "):
+            continue
+        card = {"question": "", "category": "", "answer": "", "explanation": ""}
+        card["question"] = lines[0][3:].strip()
+        current_field = None
+        current_lines = []
+        for line in lines[1:]:
+            matched = False
+            for field in ("category", "answer", "explanation"):
+                prefix = f"- {field}:"
+                if line.startswith(prefix):
+                    if current_field:
+                        card[current_field] = "\n".join(current_lines).strip()
+                    val = line[len(prefix):].strip()
+                    if val in ("", "|"):
+                        current_field = field
+                        current_lines = []
+                    else:
+                        card[field] = val
+                        current_field = None
+                        current_lines = []
+                    matched = True
+                    break
+            if not matched and current_field:
+                current_lines.append(line.strip())
+        if current_field:
+            card[current_field] = "\n".join(current_lines).strip()
+        if card["question"] and (card["answer"] or card["explanation"]):
+            card["id"] = card["question"][:60]
+            cards.append(card)
     return cards
 
 

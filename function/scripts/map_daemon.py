@@ -34,7 +34,7 @@ ROOT = SCRIPT_DIR.parent.parent
 
 from _shared import (
     LOCATIONS, NO_BACK_LOCATIONS, AppState,
-    load_state, save_state, validate_state, write_scene_file,
+    load_state, save_state, validate_state,
     action_available, scan_characters, scan_courses,
 )
 
@@ -244,12 +244,8 @@ def main():
     characters = scan_characters()
     courses = scan_courses()
 
-    # 每次启动清理残留场景文件 + 重置到校门口
-    for f in ("current_scene.json", "state/_preload.json"):
-        p = SCRIPT_DIR / f
-        if p.exists():
-            p.unlink()
-    state = load_state(no_state=True)  # 始终从校门口开始
+    # 每次启动重置到校门口，清空上次选择
+    state = load_state(no_state=True)
     validate_state(state, characters)
 
     characters_list = list(characters.values())
@@ -276,10 +272,11 @@ def main():
         if choice == "q":
             state.location = "gate"
             state.location_stack = []
+            state.teacher = None
+            state.course = None
+            state.classmate = None
+            state.scene = None
             save_state(state)
-            scene_path = SCRIPT_DIR / "current_scene.json"
-            if scene_path.exists():
-                scene_path.unlink()
             print("\n  放学了，明天见！")
             sys.exit(0)
 
@@ -336,7 +333,7 @@ def main():
                 else:
                     state.classmate = None
 
-                write_scene_file(action["scene_id"], state, characters, courses)
+                state.scene = action["scene_id"]
                 save_state(state)
 
                 scene_id = action["scene_id"]

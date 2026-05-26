@@ -3,9 +3,9 @@ chat_panel.py —— 群聊 Web 面板
 
 独立 HTTP 服务器，浏览器中展示灵、夏、柠的群聊记录。
 用法：
-    python function/scripts/chat_panel.py
-    python function/scripts/chat_panel.py --port 8766
-    python function/scripts/chat_panel.py --no-browser
+    python web/chat_panel.py
+    python web/chat_panel.py --port 8766
+    python web/chat_panel.py --no-browser
 """
 
 import os
@@ -17,9 +17,9 @@ import webbrowser
 from pathlib import Path
 from http.server import HTTPServer, BaseHTTPRequestHandler
 
-PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
 TEMPLATE_DIR = Path(__file__).resolve().parent / "templates"
-STATE_DIR = Path(__file__).resolve().parent / "state"
+STATE_DIR = PROJECT_ROOT / "function" / "scripts" / "state"
 
 if sys.platform == "win32":
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
