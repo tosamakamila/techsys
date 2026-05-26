@@ -25,10 +25,9 @@ courses/<课程名>/
 | 文件夹 | 说明 |
 |--------|------|
 | `_template/` | 新建课程模板（复制使用） |
-| `_general/` | 通用兜底课程 |
 | `动物生理学/` | 动物生理学（最完整，含知识地图 + 教案） |
 | `uv/` | UV 课程 |
 
 ## 上课机制
 
-课程文件通过 `map.py --preload` 打包到 `function/scripts/state/_preload.json`，AI 一次读取直接开场。详见根目录 `CLAUDE.md` 和 `README.md`。
+课程文件通过 `engine.py` 打包到 `function/state/_preload.json`，AI 一次读取直接开场。详见根目录 `CLAUDE.md` 和 `README.md`。

@@ -5,7 +5,7 @@ build_knowledge_map.py
 运行时机：教材改写后一次性运行，或老师编辑 knowledge_map.md 后运行。
 
 用法：
-    python function/scripts/build_knowledge_map.py courses/<课程名>/knowledge_map.md
+    python function/map/build.py courses/<课程名>/knowledge_map.md
 """
 
 import json

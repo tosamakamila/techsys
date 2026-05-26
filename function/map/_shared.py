@@ -9,7 +9,8 @@ from pathlib import Path
 from datetime import datetime
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
-SCRIPTS_DIR = Path(__file__).resolve().parent
+FUNCTION_DIR = Path(__file__).resolve().parent.parent
+STATE_DIR = FUNCTION_DIR / "state"
 
 # ── 位置定义 ─────────────────────────────────────────────────
 
@@ -104,7 +105,7 @@ def load_state(no_state: bool = False, full: bool = False):
     if no_state:
         return state
 
-    state_path = SCRIPTS_DIR / "state" / "map_state.json"
+    state_path = STATE_DIR / "map_state.json"
     if not state_path.exists():
         return state
 
@@ -133,7 +134,7 @@ def save_state(state: AppState):
         "last_scene": state.scene,
         "version": 2,
     }
-    state_path = SCRIPTS_DIR / "state" / "map_state.json"
+    state_path = STATE_DIR / "map_state.json"
     state_path.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
 
 

@@ -2,7 +2,7 @@
 
 这是全局共学内核。具体课程材料、进度、状态、教案都放在 `courses/` 下各自课程文件夹中。
 
-路由以 CLAUDE.md 为权威来源（联邦路由表模式）。场景切换由 `function/scripts/map.py` 处理。
+路由以 CLAUDE.md 为权威来源（联邦路由表模式）。场景切换由 `function/map/engine.py` 处理。
 
 ## 文件分工
 
@@ -20,7 +20,7 @@
 | `teacher/characters/xia/library_chat.md` | 图书馆聊天场景指南（夏） | `chat` 场景 |
 | `teacher/characters/<角色>/profile.yaml` | 角色卡（领航者/直觉型伙伴均 YAML化） | 按 scene 选取 |
 | `teacher/characters/<角色>/scenes/{study,review,chat}.yaml` | 场景行为定义 | 按 scene 选取 |
-| `function/scripts/map.py` | 终端交互式地图 | 用户说"上学"或上课触发词时 |
+| `function/map/engine.py` | 终端交互式地图入口 | 用户说"上学"或上课触发词时 |
 | `web/knowledge_panel.py` | 知识地图可视化面板 | 手动启动 |
-| `function/scripts/_shared.py` | 脚本共享函数 | 各脚本内部引用 |
+| `function/map/_shared.py` | 脚本共享函数 | 各脚本内部引用 |
 | `courses/<课程名>/` | 课程教材、进度、状态 | 选定课程后 |

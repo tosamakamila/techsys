@@ -22,7 +22,7 @@
 ### 0. 启动推荐
 
 ```
-python function/scripts/recommend_node.py courses/<课程名> --json --top 5
+python function/map/recommend.py courses/<课程名> --json --top 5
 ```
 
 解析 JSON，取第 1 个推荐节点。若 `recommendations` 为空 → 告知学生"目前没有检测到薄弱节点，你想复习哪个部分？"
@@ -57,7 +57,7 @@ python function/scripts/recommend_node.py courses/<课程名> --json --top 5
    - [复习修复] X 概念：已能正确区分 Y 和 Z（换 B 例子后打通）
    - [复习仍卡] X 概念：理解定义但无法迁移到新场景
    ```
-2. 运行 `python function/scripts/after_class.py courses/<课程名> --km-only`（仅更新知识地图）
+2. 运行 `python function/classroom/after_class.py courses/<课程名> --km-only`（仅更新知识地图）
 
 #### 4b. 复习链串联
 
@@ -82,7 +82,7 @@ python function/scripts/recommend_node.py courses/<课程名> --json --top 5
 ### 2. 课后更新（仅更新以下文件）
 
 - **lesson_state.yaml**：更新 conclusions + stuck + next_suggestions
-- **reading_plan.md**（脚本执行）：`python function/scripts/after_class.py courses/<课程名> --fragment <片段ID> --status 已上课 --review`（仍卡住→`--status 需复习`）（已含知识地图更新，无需单独执行）
+- **reading_plan.md**（脚本执行）：`python function/classroom/after_class.py courses/<课程名> --fragment <片段ID> --status 已上课 --review`（仍卡住→`--status 需复习`）（已含知识地图更新，无需单独执行）
 - **progress.md**（一行复习记录）：`复习日期：YYYY-MM-DD | 节点：X(修复), Y(仍不稳) | 策略：换用Y类比后打通`
 - **learner_profile.md**：同正课记忆压缩规则（≥2 次才写入）
 - **跳过**：book_revision_notes.md、diary.md

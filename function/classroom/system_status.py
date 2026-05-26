@@ -4,7 +4,7 @@ system_status.py —— 输出系统状态摘要
 避免将完整 knowledge_map_state.json 加载到 LLM 上下文。
 
 用法：
-    python function/scripts/system_status.py [--json]
+    python function/classroom/system_status.py [--json]
 """
 
 import json
@@ -24,7 +24,7 @@ def get_status(json_mode: bool = False):
     result = {}
 
     # 1. map_state.json
-    ms_path = SCRIPT_DIR / "state" / "map_state.json"
+    ms_path = ROOT / "function" / "state" / "map_state.json"
     if ms_path.exists():
         ms = json.loads(ms_path.read_text(encoding="utf-8"))
         result["location"] = ms.get("last_location", "?")
@@ -149,7 +149,7 @@ def _print_status(s: dict):
             parts.append(f"{cycles}个环")
         if missing:
             parts.append(f"{missing}个缺失引用")
-        print(f"依赖图：[!!] 异常（{'，'.join(parts)}）-> python function/scripts/check_deps.py courses/{s.get('course', '')}")
+        print(f"依赖图：[!!] 异常（{'，'.join(parts)}）-> python function/classroom/check_deps.py courses/{s.get('course', '')}")
 
 
 def main():

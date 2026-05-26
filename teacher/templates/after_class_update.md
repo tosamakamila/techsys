@@ -68,7 +68,7 @@ entry_line: |
 ### 4. reading_plan.md（脚本执行）
 
 ```bash
-python function/scripts/after_class.py courses/<课程名> --fragment <片段ID> --status 已上课 --next <下一片段>
+python function/classroom/after_class.py courses/<课程名> --fragment <片段ID> --status 已上课 --next <下一片段>
 ```
 
 - 标记需复习：`--status 需复习`（不传 `--next`）

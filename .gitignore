@@ -3,8 +3,8 @@
 responseto问题箱.md
 todo.md
 
-# 运行时状态文件（scripts/state/ 目录）
-function/scripts/state/
+# 运行时状态文件
+function/state/
 
 # 闪卡复习状态
 function/card/*/review_state.json

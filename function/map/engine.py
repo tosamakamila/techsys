@@ -5,13 +5,13 @@ map.py —— 命令行入口
 本脚本仅处理快捷路径和知识面板。
 
 用法：
-    python function/scripts/map.py --go --stdout                    续课（捕获 stdout JSON）
-    python function/scripts/map.py --go --stdout --teacher ling     切老师 + 续课
-    python function/scripts/map.py --go --stdout --course uv        切课程 + 续课
-    python function/scripts/map.py --go --stdout --location study   切位置 + 续课
-    python function/scripts/map.py --go --mode review --stdout      复习
-    python function/scripts/map.py --go --server                    续课 + 启动面板
-    python function/scripts/map.py --server                         仅启动面板
+    python function/map/engine.py --go --stdout                    续课（捕获 stdout JSON）
+    python function/map/engine.py --go --stdout --teacher ling     切老师 + 续课
+    python function/map/engine.py --go --stdout --course uv        切课程 + 续课
+    python function/map/engine.py --go --stdout --location study   切位置 + 续课
+    python function/map/engine.py --go --mode review --stdout      复习
+    python function/map/engine.py --go --server                    续课 + 启动面板
+    python function/map/engine.py --server                         仅启动面板
 """
 
 import sys
@@ -67,7 +67,7 @@ def start_server(port: int = 8765):
 
 def go_quick(args, characters: dict, courses: dict):
     """--go 快速续课：读取状态 + 参数覆盖 → 输出 scene JSON 或写文件。"""
-    state_path = SCRIPT_DIR / "state" / "map_state.json"
+    state_path = ROOT / "function" / "state" / "map_state.json"
 
     # 首次使用 + 提供了参数 → 自动创建状态
     if not state_path.exists():
@@ -193,10 +193,10 @@ def main():
 
     if not args.server:
         print("用法：")
-        print("  python function/scripts/map.py --go --stdout          续课")
-        print("  python function/scripts/map.py --go --stdout --teacher ling --course 动物生理学")
-        print("  python function/scripts/map.py --server                启动知识面板")
-        print("  python function/scripts/map_daemon.py                  终端导航菜单")
+        print("  python function/map/engine.py --go --stdout          续课")
+        print("  python function/map/engine.py --go --stdout --teacher ling --course 动物生理学")
+        print("  python function/map/engine.py --server                启动知识面板")
+        print("  python function/map/daemon.py                  终端导航菜单")
 
 
 if __name__ == "__main__":

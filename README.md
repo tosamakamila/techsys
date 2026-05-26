@@ -71,7 +71,8 @@ sugeladi/
 │   ├── characters/                角色 = profile.yaml + scenes/
 │   └── dialogue_reference/        对话写作参考
 ├── function/                    ← 功能脚本
-│   ├── scripts/                   map / daemon / 课后更新 / 知识地图构建
+│   ├── map/                       map / daemon / 知识地图构建
+│   ├── classroom/                 课后更新 / 系统状态 / 质量检查
 │   └── card/                      闪卡（制卡规则 + 素材 + 复习算法）
 ├── web/                         ← Web 可视化面板（独立）
 │   ├── knowledge_panel.py         Canvas 知识地图 + 闪卡 + 进度 + 统计
@@ -93,7 +94,7 @@ sugeladi/
 python web/knowledge_panel.py      # → http://127.0.0.1:8765
 
 # 导航菜单 —— 选角色 / 选课 / 选场景
-python function/scripts/map_daemon.py
+python function/map/daemon.py
 
 # 闪卡复习
 闪卡复习                            # 终端直接说，或在 Web 面板操作

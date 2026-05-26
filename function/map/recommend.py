@@ -4,8 +4,8 @@ recommend_node.py
 从 knowledge_map_state.json 找出薄弱节点，按影响面排序推荐。
 
 用法：
-    python function/scripts/recommend_node.py courses/<课程名>
-    python function/scripts/recommend_node.py courses/<课程名> --top 5
+    python function/map/recommend.py courses/<课程名>
+    python function/map/recommend.py courses/<课程名> --top 5
 
 输入：
     courses/<课程名>/knowledge_map_state.json

@@ -6,7 +6,8 @@
       "PowerShell(*)",
       "Bash(powershell *)",
       "Bash(python scripts/map.py)",
-      "Bash(python scripts/*.py)"
+      "Bash(python scripts/*.py)",
+      "WebSearch"
     ]
   },
   "hooks": {

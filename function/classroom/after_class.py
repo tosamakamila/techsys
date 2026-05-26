@@ -5,16 +5,16 @@ after_class.py —— 下课后统一更新
 
 用法：
     # 正课推进：更新 reading_plan + 知识地图
-    python function/scripts/after_class.py courses/<课程名> --fragment L002a --status 已上课 --next L002b
+    python function/classroom/after_class.py courses/<课程名> --fragment L002a --status 已上课 --next L002b
 
     # 复习课修复（不推进位置）
-    python function/scripts/after_class.py courses/<课程名> --fragment L001 --status 已上课 --review
+    python function/classroom/after_class.py courses/<课程名> --fragment L001 --status 已上课 --review
 
     # 标记需复习
-    python function/scripts/after_class.py courses/<课程名> --fragment L003 --status 需复习 --tag "反馈调节混淆"
+    python function/classroom/after_class.py courses/<课程名> --fragment L003 --status 需复习 --tag "反馈调节混淆"
 
     # 只更新知识地图（不更新 reading_plan）
-    python function/scripts/after_class.py courses/<课程名> --km-only
+    python function/classroom/after_class.py courses/<课程名> --km-only
 """
 
 import sys
@@ -301,6 +301,42 @@ def _update_km(course_dir: Path) -> list:
     return changes
 
 
+# ── update_lesson_entry 逻辑 ────────────────────────────────────
+
+def _update_lesson_entry(course_dir: Path, next_fragment: str):
+    """推进 lesson_entry 到下一片段，清空 interrupted_at。行级替换，不乱格式。"""
+    for ext in (".yaml", ".yml", ".md"):
+        le_path = course_dir / f"lesson_entry{ext}"
+        if le_path.exists():
+            break
+    else:
+        print("  跳过 lesson_entry：文件不存在")
+        return
+
+    text = le_path.read_text(encoding="utf-8")
+    lines = text.split("\n")
+    new_lines = []
+    updated_fragment = False
+    updated_interrupted = False
+
+    for line in lines:
+        stripped = line.strip()
+        if not updated_fragment and stripped.startswith("fragment:"):
+            new_lines.append(f"fragment: {next_fragment}")
+            updated_fragment = True
+        elif not updated_interrupted and stripped.startswith("interrupted_at:"):
+            new_lines.append("interrupted_at:")
+            updated_interrupted = True
+        else:
+            new_lines.append(line)
+
+    if updated_fragment:
+        le_path.write_text("\n".join(new_lines), encoding="utf-8")
+        print(f"  lesson_entry: → {next_fragment}（清空卡点）")
+    else:
+        print(f"  警告：lesson_entry 中未找到 fragment 字段，未更新")
+
+
 # ── 主入口 ─────────────────────────────────────────────────────
 
 def main():
@@ -350,6 +386,10 @@ def main():
         _advance_reading(course_dir, fragment, status, next_fragment, tag, review)
     elif km_only:
         print("  --km-only：跳过 reading_plan 更新")
+
+    # Step 1.5: 推进 lesson_entry（有 --next 时自动切片段）
+    if next_fragment:
+        _update_lesson_entry(course_dir, next_fragment)
 
     # Step 2: 更新知识地图
     _update_km(course_dir)

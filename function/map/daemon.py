@@ -3,8 +3,8 @@ map_daemon.py —— 终端常驻导航菜单
 
 纯标准库，无第三方依赖。跳出powershell启动脚本,全程复用。
 用法：
-    python function/scripts/map_daemon.py
-    python function/scripts/map_daemon.py --no-state   # 全新开始
+    python function/map/daemon.py
+    python function/map/daemon.py --no-state   # 全新开始
 """
 
 import sys

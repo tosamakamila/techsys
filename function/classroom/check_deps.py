@@ -1,8 +1,8 @@
 """
 依赖图校验工具。
 用法：
-    python function/scripts/check_deps.py courses/<课程名>        # 直接输出
-    python function/scripts/check_deps.py courses/<课程名> --json  # JSON 输出
+    python function/classroom/check_deps.py courses/<课程名>        # 直接输出
+    python function/classroom/check_deps.py courses/<课程名> --json  # JSON 输出
 也可从 system_status.py 导入 check_deps() 函数。
 """
 import sys, re, json

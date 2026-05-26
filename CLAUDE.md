@@ -12,14 +12,14 @@
 
 | 触发 | 行为 |
 |------|------|
-| 「菜单」/ 打开 daemon / 切换场景 | 弹 daemon 窗口：`Start-Process powershell -ArgumentList "-NoExit", "-Command", "python function/scripts/map_daemon.py"`（必须在新的 PowerShell 窗口运行，不是 cmd）。选完场景后说「上课」即可。 |
-| 「上课」 | pro 直接读 `function/scripts/state/map_state.json`。若 teacher 为空 → 提示"还没有想好哪位来一起学习哦，要启用菜单么？"。有值 → 按 scene 分发加载 → 开场 |
+| 「菜单」/ 打开 daemon / 切换场景 | 弹 daemon 窗口：`Start-Process powershell -ArgumentList "-NoExit", "-Command", "python function/map/daemon.py"`（必须在新的 PowerShell 窗口运行，不是 cmd）。选完场景后说「上课」即可。 |
+| 「上课」 | pro 直接读 `function/state/map_state.json`。若 teacher 为空 → 提示"还没有想好哪位来一起学习哦，要启用菜单么？"。有值 → 按 scene 分发加载 → 开场 |
 | 「下课」「今天到这里」 | 下课流程（见下） |
 | 「放学」「走了」 | 直接退出 |
-| 「看看消息」「群里有什么」「看群聊」 | haiku 读 `function/scripts/state/group_chat_unread.md`，有未读则展示；回复后追加到 `group_chat.md` 并清空未读 |
+| 「看看消息」「群里有什么」「看群聊」 | haiku 读 `function/state/group_chat_unread.md`，有未读则展示；回复后追加到 `group_chat.md` 并清空未读 |
 | 「闪卡复习」「复习闪卡」 | `python function/card/review.py` |
-| 「系统状态」 | 运行 `python function/scripts/system_status.py` 输出摘要 |
-| 「怎么走到这里的」 | pro 读 `function/scripts/state/map_state.json`，显示 scene 信息 + 推导路由决策链 |
+| 「系统状态」 | 运行 `python function/classroom/system_status.py` 输出摘要 |
+| 「怎么走到这里的」 | pro 读 `function/state/map_state.json`，显示 scene 信息 + 推导路由决策链 |
 
 上课/复习时：文件逐条读取过程不输出说明文字，读完直接输出角色对话或场景描写。不依赖 FileChanged 钩子。
 
@@ -59,10 +59,10 @@ scene 分发时，pro 直接读取以下文件：
 1. 总结：haiku 读课程文件（learner_profile.md、lesson_entry.yaml、progress.md）→ pro 标不稳概念，给下一课建议
 2. haiku 子代理写课后产出（并行），**均需读 `teacher/dialogue_reference/` 下三个角色的对话参考**：
    - 课后群聊 → `teaching_insights.md`（灵+夏+柠讨论：覆盖内容、学习者状态、被绕开的问题）
-   - 群聊消息 → 按 `function/scripts/state/group_chat_unread.md` 文件头规范写入
+   - 群聊消息 → 按 `function/state/group_chat_unread.md` 文件头规范写入
    - 结构化优化记录 → 追加 `teaching_insights.md` 表格（保留最近 5 条，≥3 次升迁到 learner_profile.md）
 3. 询问是否标记闪卡 → 同意则并行启动闪卡子代理。子代理读 `card_material.md`（素材），产 `cards.md`（Q&A 格式闪卡）。产卡规则见 `function/card/card_rules.md`
-4. `python function/scripts/after_class.py courses/<课程名> --fragment <片段ID> --status 已上课 [--next <下一片段>] [--review]`
+4. `python function/classroom/after_class.py courses/<课程名> --fragment <片段ID> --status 已上课 [--next <下一片段>] [--review]`。若有 `--next`，脚本自动推进 `lesson_entry.yaml` 的 fragment 并清空 interrupted_at。agent 不再手动维护 lesson_entry 的片段位置
 
 ## 复习课下课
 
